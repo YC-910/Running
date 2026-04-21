@@ -253,9 +253,10 @@ tools, log, dash, event, calendar,  marathon_info = st.tabs([
 # TOOLS
 # ==================================================
 with tools:
-    pace_converter, speed_converter = st.tabs([
+    pace_converter, speed_converter, thr_bpm_calculator = st.tabs([
         "🧮 Pace Converter",
-        "🚀 Speed Converter"
+        "🚀 Speed Converter",
+        "❤️ Heart Rate Calculator"
     ])
 
     # ==================================================
@@ -355,8 +356,6 @@ with tools:
             else:
                 st.warning("Pace must be greater than 0")
 
-
-
     # ---------------- Speed -> Pace ----------------
     with speed_tab:
         st.markdown("### 🚀 Speed → Pace (min/km)")
@@ -376,6 +375,74 @@ with tools:
 
             else:
                 st.warning("Speed must be greater than 0")
+
+    # ==================================================
+    # ❤️ HEART RATE CALCULATOR (CONTROLLED FLOW)
+    # ==================================================
+    with thr_bpm_calculator:
+        st.markdown("### ❤️ Target Heart Rate (BPM) Calculator")
+
+        # ---------------- AGE INPUT FIRST ----------------
+        age = st.number_input("Enter your age", min_value=0, step=1)
+
+        # 🚫 Block until valid age
+        if age <= 19:
+            st.warning("Please enter an age greater than 19 for accurate heart rate zones.")
+            st.stop()
+
+        # ---------------- FORMULA (SHOW AFTER AGE) ----------------
+        formula = st.selectbox(
+            "Select Formula",
+            ["Standard (220 - age)", "Tanaka (208 - 0.7 × age)"]
+        )
+
+        # ---------------- CALCULATE MAX HR ----------------
+        if formula == "Standard (220 - age)":
+            max_hr = 220 - age
+        else:
+            max_hr = int(208 - (0.7 * age))
+
+        st.success(f"🔥 Max Heart Rate: {max_hr} BPM")
+
+        # ---------------- ZONES (REVERSED ORDER) ----------------
+        zones = [
+            ("Maximum (VO2 Max Zone)", "90–100%", "Sprint / Peak"),
+            ("Hard (Anaerobic Zone)", "80–90%", "Performance"),
+            ("Moderate (Aerobic Zone)", "70–80%", "Endurance"),
+            ("Light (Fat Burn Zone)", "60–70%", "Fat Burn"),
+            ("Very Light (Warm Up Zone)", "50–60%", "Recovery / Warm-up"),
+        ]
+
+        table_data = []
+
+        for name, percent, purpose in zones:
+            low, high = percent.replace("%", "").split("–")
+            low = int(low)
+            high = int(high)
+
+            low_bpm = int(max_hr * low / 100)
+            high_bpm = int(max_hr * high / 100)
+
+            table_data.append({
+                "Zone": name,
+                "Intensity (%)": percent,
+                "Heart Rate (BPM)": f"{low_bpm} - {high_bpm}",
+                "Purpose": purpose
+            })
+
+        df_zones = pd.DataFrame(table_data)
+
+        # ---------------- DISPLAY TABLE ----------------
+        st.markdown("### 📊 Heart Rate Zones Table")
+        st.table(df_zones)  # ✅ No index shown
+
+        # ---------------- GUIDE ----------------
+        st.markdown("""
+        💡 **Training Tips:**
+        - 🔵 Lower zones (Warm Up Zone / Fat Burn Zone) → recovery & fat burn
+        - 🟢 Moderate (Aerobic Zone) → endurance runs
+        - 🔴 High zones (Anaerobic Zone / VO2 Max Zone) → intervals & race pace
+        """)
 
 # ==================================================
 # LOG RUN
