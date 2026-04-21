@@ -16,7 +16,6 @@ st.set_page_config(
 FILE = "runs.csv"
 NOTES_FILE = "notes.csv"
 EVENT_FILE = "events.csv"
-MARATHON_FILE = "marathon_info.csv"
 
 # ==================================================
 # Helpers
@@ -47,13 +46,6 @@ def load_events():
 def save_events(df):
     df.to_csv(EVENT_FILE, index=False)
 
-def load_marathon():
-    if os.path.exists(MARATHON_FILE):
-        return pd.read_csv(MARATHON_FILE)
-    return pd.DataFrame(columns=["id", "category", "title", "content", "file"])
-
-def save_marathon(df):
-    df.to_csv(MARATHON_FILE, index=False)
 # ==================================================
 # Pace / Speed Helpers
 # ==================================================
@@ -247,15 +239,14 @@ st.markdown("""
 # ==================================================
 # MAIN TABS
 # ==================================================
-tools, log, dash, event, calendar, marathon_info, body_measure, notes_tab = st.tabs([
+tools, log, dash, event, calendar,  marathon_info, body_measure = st.tabs([
     "⚡ Tools",
     "📝 Log Run",
     "📊 Performance",
     "🏁 Event",
     "📅 Calendar",
-    "🏃 Marathon Info",   
-    "🏋️‍♂️ Body Measurement",
-    "📝 Notes"
+    "🏃 Marathon Info",
+    "🏋️‍♂️ Body Measurement (Future Feature)"
 ])
 
 # ==================================================
@@ -683,161 +674,29 @@ with calendar:
         st.markdown(table_html, unsafe_allow_html=True)
 
 # ==================================================
-# Marathon Info Tab
-# ==================================================
-with marathon_info:
-    st.markdown("### 🏃 Marathon Information Hub")
-
-    df_marathon = load_marathon()
-
-    # ---------------- Base Tabs ----------------
-    tab_5k, tab_10k, tab_half, tab_full, tab_other = st.tabs([
-        "5K",
-        "10K",
-        "Half Marathon",
-        "Full Marathon",
-        "Others"
-    ])
-
-    # ==========================================
-    # FUNCTION: RENDER SECTION
-    # ==========================================
-    def render_section(category):
-        st.markdown(f"### {category}")
-
-        # -------- Add Content --------
-        with st.expander("➕ Add Content", expanded=False):
-            title = st.text_input(f"Title ({category})", key=f"title_{category}")
-            content = st.text_area(f"Notes ({category})", key=f"content_{category}")
-
-            uploaded_file = st.file_uploader(
-                "Upload File (Image / Video / PDF)",
-                key=f"file_{category}"
-            )
-
-            if st.button("Save", key=f"save_{category}"):
-                file_path = ""
-
-                file_path = ""
-
-                # Only save file if user uploaded one
-                if uploaded_file:
-                    os.makedirs("uploads", exist_ok=True)
-
-                    file_path = os.path.join("uploads", uploaded_file.name)
-
-                    with open(file_path, "wb") as f:
-                        f.write(uploaded_file.getbuffer())
-
-                new_id = 1 if df_marathon.empty else df_marathon["id"].max() + 1
-
-                new_data = {
-                    "id": new_id,
-                    "category": category,
-                    "title": title,
-                    "content": content,
-                    "file": file_path
-                }
-
-                df_new = pd.concat([df_marathon, pd.DataFrame([new_data])], ignore_index=True)
-                save_marathon(df_new)
-
-                st.success("Saved!")
-                st.rerun()
-
-        # -------- Display Content --------
-        filtered = df_marathon[df_marathon["category"] == category]
-
-        if filtered.empty:
-            st.info("No content yet.")
-        else:
-            for idx, row in filtered.iterrows():
-                with st.expander(f"📌 {row['title']}"):
-                    st.write(row["content"])
-
-                    # Show file
-                    if isinstance(row["file"], str) and row["file"] != "":
-                        if row["file"].lower().endswith(("png", "jpg", "jpeg")):
-                            st.image(row["file"])
-                        elif row["file"].lower().endswith(("mp4", "mov")):
-                            st.video(row["file"])
-                        else:
-                            with open(row["file"], "rb") as f:
-                                st.download_button(
-                                    "Download File",
-                                    f,
-                                    file_name=os.path.basename(row["file"])
-                                )
-                    if st.button("Delete", key=f"del_{row['id']}"):
-                        df_new = df_marathon[df_marathon["id"] != row["id"]]
-                        save_marathon(df_new)
-                        st.warning("Deleted")
-                        st.rerun()
-
-    # ==========================================
-    # FIXED TABS
-    # ==========================================
-    with tab_5k:
-        render_section("5K")
-
-    with tab_10k:
-        render_section("10K")
-
-    with tab_half:
-        render_section("Half Marathon")
-
-    with tab_full:
-        render_section("Full Marathon")
-
-    # ==========================================
-    # OTHERS (DYNAMIC)
-    # ==========================================
-    with tab_other:
-        st.markdown("### ➕ Custom Categories")
-
-        # Add category
-        new_cat = st.text_input("New Category Name")
-
-        if st.button("Add Category"):
-            st.session_state.setdefault("custom_cats", [])
-            st.session_state["custom_cats"].append(new_cat)
-            st.rerun()
-
-        # Show categories
-        custom_cats = st.session_state.get("custom_cats", [])
-
-        for cat in custom_cats:
-            with st.expander(f"📂 {cat}", expanded=False):
-                render_section(cat)
-
-                if st.button(f"Delete Category {cat}"):
-                    st.session_state["custom_cats"].remove(cat)
-                    st.rerun()
-
-# ==================================================
 # BODY MEASUREMENT TAB - LINK TO 8501
 # ==================================================
-with body_measure:   # NEW TAB ADDED
-    st.markdown("### 🧍 Go to Advanced Body Measurement System")
-    st.markdown(
-        """
-        Click the button below to open your **Advanced Body Measurement** app.
-        """)
+# with body_measure:   # NEW TAB ADDED
+#     st.markdown("### 🧍 Go to Advanced Body Measurement System")
+#     st.markdown(
+#         """
+#         Click the button below to open your **Advanced Body Measurement** app.
+#         """)
     
-    # Styled button consistent with your theme
-    st.markdown(
-        '<a href="http://localhost:8501/" target="_blank">'
-        '<button style="background: linear-gradient(90deg, #ff6a00, #ff9800);'
-        'color:white;padding:12px 24px;border:none;border-radius:14px;font-weight:700;'
-        'font-size:16px;box-shadow: 0 8px 20px #00000080;">'
-        'Open Advanced Body Measurement</button></a>',
-        unsafe_allow_html=True
-    )
+#     # Styled button consistent with your theme
+#     st.markdown(
+#         '<a href="http://localhost:8501/" target="_blank">'
+#         '<button style="background: linear-gradient(90deg, #ff6a00, #ff9800);'
+#         'color:white;padding:12px 24px;border:none;border-radius:14px;font-weight:700;'
+#         'font-size:16px;box-shadow: 0 8px 20px #00000080;">'
+#         'Open Advanced Body Measurement</button></a>',
+#         unsafe_allow_html=True
+#     )
 
 # ==================================================
 # NOTES TAB - Add / Edit / Delete / Search Notes
 # ==================================================
-with notes_tab:
+with marathon_info:
     st.markdown("### 📝 Training Notes")
     st.markdown("Keep track of thoughts, injuries, goals, or reflections.")
 
