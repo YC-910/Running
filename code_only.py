@@ -246,7 +246,7 @@ tools, log, dash, event, calendar,  marathon_info, body_measure = st.tabs([
     "🏁 Event",
     "📅 Calendar",
     "🏃 Marathon Info",
-    "🏋️‍♂️ Body Measurement (Future Feature)"
+    # "🏋️‍♂️ Body Measurement (Future Feature)"
 ])
 
 # ==================================================
