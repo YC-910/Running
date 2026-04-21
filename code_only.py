@@ -239,13 +239,13 @@ st.markdown("""
 # ==================================================
 # MAIN TABS
 # ==================================================
-tools, log, dash, event, calendar,  marathon_info = st.tabs([
+tools, log, dash, event, calendar,  notes = st.tabs([
     "⚡ Tools",
     "📝 Log Run",
     "📊 Performance",
     "🏁 Event",
     "📅 Calendar",
-    "🏃 Marathon Info",
+    "🏃 Notes",
     # "🏋️‍♂️ Body Measurement (Future Feature)"
 ])
 
@@ -757,7 +757,7 @@ with calendar:
 # ==================================================
 # NOTES TAB - Add / Edit / Delete / Search Notes
 # ==================================================
-with marathon_info:
+with notes:
     st.markdown("### 📝 Training Notes")
     st.markdown("Keep track of thoughts, injuries, goals, or reflections.")
 
