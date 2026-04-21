@@ -382,67 +382,61 @@ with tools:
     with thr_bpm_calculator:
         st.markdown("### ❤️ Target Heart Rate (BPM) Calculator")
 
-        # ---------------- AGE INPUT FIRST ----------------
         age = st.number_input("Enter your age", min_value=0, step=1)
 
-        # 🚫 Block until valid age
         if age <= 19:
             st.warning("Please enter an age greater than 19 for accurate heart rate zones.")
-            st.stop()
-
-        # ---------------- FORMULA (SHOW AFTER AGE) ----------------
-        formula = st.selectbox(
-            "Select Formula",
-            ["Standard (220 - age)", "Tanaka (208 - 0.7 × age)"]
-        )
-
-        # ---------------- CALCULATE MAX HR ----------------
-        if formula == "Standard (220 - age)":
-            max_hr = 220 - age
         else:
-            max_hr = int(208 - (0.7 * age))
+            # ---------------- FORMULA ----------------
+            formula = st.selectbox(
+                "Select Formula",
+                ["Standard (220 - age)", "Tanaka (208 - 0.7 × age)"]
+            )
 
-        st.success(f"🔥 Max Heart Rate: {max_hr} BPM")
+            # ---------------- MAX HR ----------------
+            if formula == "Standard (220 - age)":
+                max_hr = 220 - age
+            else:
+                max_hr = int(208 - (0.7 * age))
 
-        # ---------------- ZONES (REVERSED ORDER) ----------------
-        zones = [
-            ("Maximum (VO2 Max Zone)", "90–100%", "Sprint / Peak"),
-            ("Hard (Anaerobic Zone)", "80–90%", "Performance"),
-            ("Moderate (Aerobic Zone)", "70–80%", "Endurance"),
-            ("Light (Fat Burn Zone)", "60–70%", "Fat Burn"),
-            ("Very Light (Warm Up Zone)", "50–60%", "Recovery / Warm-up"),
-        ]
+            st.success(f"🔥 Max Heart Rate: {max_hr} BPM")
 
-        table_data = []
+            # ---------------- ZONES ----------------
+            zones = [
+                ("Maximum (VO2 Max Zone)", "90–100%", "Sprint / Peak"),
+                ("Hard (Anaerobic Zone)", "80–90%", "Performance"),
+                ("Moderate (Aerobic Zone)", "70–80%", "Endurance"),
+                ("Light (Fat Burn Zone)", "60–70%", "Fat Burn"),
+                ("Very Light (Warm Up Zone)", "50–60%", "Recovery / Warm-up"),
+            ]
 
-        for name, percent, purpose in zones:
-            low, high = percent.replace("%", "").split("–")
-            low = int(low)
-            high = int(high)
+            table_data = []
 
-            low_bpm = int(max_hr * low / 100)
-            high_bpm = int(max_hr * high / 100)
+            for name, percent, purpose in zones:
+                low, high = percent.replace("%", "").split("–")
+                low, high = int(low), int(high)
 
-            table_data.append({
-                "Zone": name,
-                "Intensity (%)": percent,
-                "Heart Rate (BPM)": f"{low_bpm} - {high_bpm}",
-                "Purpose": purpose
-            })
+                low_bpm = int(max_hr * low / 100)
+                high_bpm = int(max_hr * high / 100)
 
-        df_zones = pd.DataFrame(table_data)
+                table_data.append({
+                    "Zone": name,
+                    "Intensity (%)": percent,
+                    "Heart Rate (BPM)": f"{low_bpm} - {high_bpm}",
+                    "Purpose": purpose
+                })
 
-        # ---------------- DISPLAY TABLE ----------------
-        st.markdown("### 📊 Heart Rate Zones Table")
-        st.table(df_zones)  # ✅ No index shown
+            df_zones = pd.DataFrame(table_data)
 
-        # ---------------- GUIDE ----------------
-        st.markdown("""
-        💡 **Training Tips:**
-        - 🔵 Lower zones (Warm Up Zone / Fat Burn Zone) → recovery & fat burn
-        - 🟢 Moderate (Aerobic Zone) → endurance runs
-        - 🔴 High zones (Anaerobic Zone / VO2 Max Zone) → intervals & race pace
-        """)
+            st.markdown("### 📊 Heart Rate Zones Table")
+            st.table(df_zones)
+
+            st.markdown("""
+            💡 **Training Tips:**
+            - 🔵 Lower zones → recovery & fat burn  
+            - 🟢 Moderate → endurance  
+            - 🔴 High zones → intervals & performance  
+            """)
 
 # ==================================================
 # LOG RUN
