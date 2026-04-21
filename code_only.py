@@ -239,7 +239,7 @@ st.markdown("""
 # ==================================================
 # MAIN TABS
 # ==================================================
-tools, log, dash, event, calendar,  marathon_info, body_measure = st.tabs([
+tools, log, dash, event, calendar,  marathon_info = st.tabs([
     "⚡ Tools",
     "📝 Log Run",
     "📊 Performance",
