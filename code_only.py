@@ -556,7 +556,7 @@ with tools:
             <div style="
                 padding:15px;
                 border-radius:10px;
-                background-color:#ffffff;
+                background-color:#1E1E1E;
                 color:#000000;
                 line-height:1.8;
             ">
