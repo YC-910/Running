@@ -29,7 +29,6 @@ if "is_admin" not in st.session_state:
 FILE = "runs.csv"
 NOTES_FILE = "notes.csv"
 EVENT_FILE = "events.csv"
-ENHANCE_FILE = "enhancements.csv"
 # ==================================================
 # Helpers
 # ==================================================
@@ -120,14 +119,6 @@ def load_notes():
 
 def save_notes(df):
     df.to_csv(NOTES_FILE, index=False)
-
-def load_enhancements():
-    if os.path.exists(ENHANCE_FILE):
-        return pd.read_csv(ENHANCE_FILE)
-    return pd.DataFrame(columns=["id", "text", "done"])
-
-def save_enhancements(df):
-    df.to_csv(ENHANCE_FILE, index=False)
 # ==================================================
 # ULTRA-PREMIUM GARMIN / STRAVA CSS (MOBILE FRIENDLY)
 # ==================================================
@@ -274,15 +265,14 @@ st.markdown("""
 # ==================================================
 # MAIN TABS
 # ==================================================
-tools, log, dash, event, calendar, notes, system = st.tabs([
+tools, log, dash, event, calendar, notes = st.tabs([
     "⚡ Tools",
     "📝 Log Run",
     "📊 Performance",
     "🏁 Event Countdown",
     "📅 Calendar",
-    "🏃 Notes",
-    "🛠️ System Enhance"
-])
+    "🏃 Notes"
+    ])
 
 # ==================================================
 # TOOLS
