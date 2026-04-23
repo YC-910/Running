@@ -5,6 +5,13 @@ import os
 import altair as alt
 
 # ==================================================
+# PASSWORDS
+# ==================================================
+ADMIN_PASSWORD = "admin"
+
+PREMIUM_PASSWORD = "premium"
+
+# ==================================================
 # PAGE CONFIG
 # ==================================================
 st.set_page_config(
@@ -13,10 +20,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+if "is_admin" not in st.session_state:
+    st.session_state.is_admin = False
+
+# ==================================================
+# DATA FILES
+# ==================================================
 FILE = "runs.csv"
 NOTES_FILE = "notes.csv"
 EVENT_FILE = "events.csv"
-
+ENHANCE_FILE = "enhancements.csv"
 # ==================================================
 # Helpers
 # ==================================================
@@ -45,6 +58,21 @@ def load_events():
 
 def save_events(df):
     df.to_csv(EVENT_FILE, index=False)
+
+def snap_bpm(x):
+    last_digit = int(x) % 10
+
+    if last_digit in [1, 2, 8, 9]:
+        # round to nearest 10
+        return round(x / 10) * 10
+
+    elif last_digit in [3, 4, 6, 7]:
+        # round to nearest 5
+        return round(x / 5) * 5
+
+    else:
+        # already clean (0 or 5)
+        return x
 
 # ==================================================
 # Pace / Speed Helpers
@@ -93,6 +121,13 @@ def load_notes():
 def save_notes(df):
     df.to_csv(NOTES_FILE, index=False)
 
+def load_enhancements():
+    if os.path.exists(ENHANCE_FILE):
+        return pd.read_csv(ENHANCE_FILE)
+    return pd.DataFrame(columns=["id", "text", "done"])
+
+def save_enhancements(df):
+    df.to_csv(ENHANCE_FILE, index=False)
 # ==================================================
 # ULTRA-PREMIUM GARMIN / STRAVA CSS (MOBILE FRIENDLY)
 # ==================================================
@@ -239,24 +274,27 @@ st.markdown("""
 # ==================================================
 # MAIN TABS
 # ==================================================
-tools, log, dash, event, calendar,  notes = st.tabs([
+tools, log, dash, event, calendar, notes, system = st.tabs([
     "⚡ Tools",
     "📝 Log Run",
     "📊 Performance",
-    "🏁 Event",
+    "🏁 Event Countdown",
     "📅 Calendar",
     "🏃 Notes",
-    # "🏋️‍♂️ Body Measurement (Future Feature)"
+    "🛠️ System Enhance"
 ])
 
 # ==================================================
 # TOOLS
 # ==================================================
 with tools:
-    pace_converter, speed_converter, thr_bpm_calculator = st.tabs([
+    pace_converter, speed_converter, thr_bpm_calculator, VO_calculator, BMI_calculator, pace_spm_bpm_converter = st.tabs([
         "🧮 Pace Converter",
         "🚀 Speed Converter",
-        "❤️ Heart Rate Calculator"
+        "❤️ Heart Rate Calculator",
+        "📈 VO2 Max Calculator",
+        "⚖️ BMI Calculator",
+        "⏱️ Pace/SPM/BPM Converter"
     ])
 
     # ==================================================
@@ -437,7 +475,213 @@ with tools:
             - 🟢 Moderate → endurance  
             - 🔴 High zones → intervals & performance  
             """)
+    # ==================================================
+    # 📈 VO2 MAX CALCULATOR (12-MIN COOPER TEST)
+    # ==================================================
+    with VO_calculator:
+        st.markdown("### 📈 VO2 Max Calculator (12-Min Run)")
 
+        st.info("Enter the distance you ran in 12 minutes to estimate your VO2 Max using the Cooper Test.")
+
+        # ---------------- Input ----------------
+        distance_km = st.number_input(
+            "Distance covered in 12 minutes (km)", 
+            min_value=0.1, 
+            step=0.1, 
+            value=2.5, 
+            key="vo_distance"
+        )
+
+        if st.button("Calculate VO2 Max", key="vo_btn"):
+            if distance_km > 0:
+                distance_m = distance_km * 1000  # convert to meters
+                vo2_max = (distance_m - 504.9) / 44.7
+
+                st.success(f"📈 Estimated VO2 Max: **{vo2_max:.1f} ml/kg/min**")
+
+                # -------- Interpretation --------
+                if vo2_max >= 60:
+                    level = "🟢 Excellent"
+                elif vo2_max >= 50:
+                    level = "🟡 Good"
+                elif vo2_max >= 40:
+                    level = "🟠 Average"
+                else:
+                    level = "🔴 Below Average"
+
+                st.markdown(f"💡 **Fitness Level:** {level}")
+
+            else:
+                st.warning("Please enter a valid distance.")
+    # ==================================================
+    # ⚖️ BMI CALCULATOR (CONTROLLED FLOW)
+    # ==================================================
+    with BMI_calculator:
+        st.markdown("### ⚖️ BMI Calculator")
+
+        weight = st.number_input("Weight (kg)", min_value=0.1, step=0.1, value=70.0, key="b_weight")
+        height = st.number_input("Height (cm)", min_value=0.1, step=0.1, value=170.0, key="b_height")
+
+        if st.button("Calculate BMI", key="b_btn"):
+            if weight > 0 and height > 0:
+                height_m = height / 100  # convert to meters
+                bmi = weight / (height_m ** 2)
+
+                st.success(f"⚖️ Your BMI: **{bmi:.1f}**")
+
+                # -------- Interpretation --------
+                if bmi < 18.5:
+                    category = "🔴 Underweight"
+                elif bmi < 25:
+                    category = "🟢 Normal weight"
+                elif bmi < 30:
+                    category = "🟠 Overweight"
+                else:
+                    category = "🔴 Obese"
+
+                st.markdown(f"💡 **Category:** {category}")
+            else:
+                st.warning("Please enter valid weight and height.")
+
+    # ==================================================
+    # ⏱️ PACE → SPM → MUSIC BPM CONVERTER (PREMIUM LOCK)
+    # ==================================================
+    if "is_premium" not in st.session_state:
+        st.session_state.is_premium = False
+
+
+    # ==================================================
+    # ⏱️ PACE → SPM → MUSIC BPM CONVERTER
+    # ==================================================
+    with pace_spm_bpm_converter:
+
+        st.markdown("### ⏱️ Pace → SPM → Music BPM Converter")
+
+        # ==================================================
+        # 🔐 PREMIUM LOGIN
+        # ==================================================
+        if not st.session_state.get("is_premium", False):
+
+            st.markdown("""
+            <div style="
+                padding:15px;
+                border-radius:10px;
+                background-color:#ffffff;
+                color:#000000;
+                line-height:1.8;
+            ">
+            ⏱️ Pace → SPM → BPM Converter<br>
+            🔒 Unlock to access full analytics<br>
+            🎧 Spotify integration included<br>
+            📊 Personalized running insights<br>
+            ⚡ Real-time pace conversion
+            </div>
+            """, unsafe_allow_html=True)
+            
+            password = st.text_input("Enter Premium Password", type="password")
+
+            if password == "":
+                st.info("🔒 Premium Feature Locked")
+
+            elif password == PREMIUM_PASSWORD:
+                st.session_state.is_premium = True
+                st.success("🎉 Premium Unlocked!")
+                st.rerun()
+
+            elif password != "":
+                st.error("❌ Wrong Password")
+                st.info("🔒 Premium Feature Locked")
+
+        # ==================================================
+        # 🎯 PREMIUM CONTENT (ONLY SHOW IF UNLOCKED)
+        # ==================================================
+        if st.session_state.is_premium:
+
+            # ---------------- EXPANDER ----------------
+            with st.expander("🔎 How this converter works", expanded=True):
+                st.markdown("""
+                ### 1️⃣ Speed from pace  
+                Speed (km/h) = 60 / Pace (min/km)
+
+                ### 2️⃣ Stride estimation  
+                Stride length = 0.65 × Height (m)
+
+                ### 3️⃣ Cadence (SPM)  
+                SPM = 1000 / (Pace × Stride length)
+
+                ### 4️⃣ Music sync model  
+                Music BPM = SPM (1:1 rhythm matching)
+                """)
+
+            # ---------------- INPUTS ----------------
+            c1, c2 = st.columns(2)
+
+            with c1:
+                pace = st.number_input(
+                    "Average Pace (min/km)",
+                    min_value=0.0,
+                    step=0.01,
+                    key="psp_pace"
+                )
+
+            with c2:
+                height_cm = st.number_input(
+                    "Height (cm)",
+                    min_value=0,
+                    step=1,
+                    key="psp_height"
+                )
+
+            # ---------------- CONVERT ----------------
+            if st.button("Convert", key="psp_btn"):
+
+                height_m = height_cm / 100 if height_cm > 0 else 0
+
+                if pace > 0 and height_m > 0:
+
+                    speed_kmh = 60 / pace
+                    stride_length = 0.65 * height_m
+                    spm = 1000 / (pace * stride_length)
+                    bpm = spm
+
+                    low_bpm = snap_bpm(bpm - 5)
+                    high_bpm = snap_bpm(bpm + 5)
+
+                    st.success(f"""
+                    🚀 **Results**
+
+                    - 🏃 Average Pace: {pace:.2f} min/km  
+                    - ⚡ Average Speed: {speed_kmh:.2f} km/h  
+                    - 📏 Estimated Stride Length: {stride_length:.2f} m  
+                    - 👣 Average Cadence (SPM): {spm:.0f} steps/min  
+                    - 🎵 Average Music BPM: {bpm:.0f} BPM  
+                    """)
+
+                    st.info(f"""
+                    🎧 Your best running rhythm music range is:
+
+                    **{low_bpm:.0f} BPM to {high_bpm:.0f} BPM**
+                    """)
+
+                    st.markdown("### 🎧 Premium Music Access")
+
+                    c1, c2 = st.columns(2)
+
+                    with c1:
+                        st.link_button(
+                            f"🎵 {low_bpm:.0f} BPM",
+                            f"https://open.spotify.com/search/{int(low_bpm)}%20BPM"
+                        )
+
+                    with c2:
+                        st.link_button(
+                            f"🎵 {high_bpm:.0f} BPM",
+                            f"https://open.spotify.com/search/{int(high_bpm)}%20BPM"
+                        )
+
+                else:
+                    st.warning("Please enter valid pace and height.")
+        
 # ==================================================
 # LOG RUN
 # ==================================================
