@@ -557,7 +557,7 @@ with tools:
                 padding:15px;
                 border-radius:10px;
                 background-color:#1E1E1E;
-                color:#000000;
+                color:#ffffff;
                 line-height:1.8;
             ">
             ⏱️ Pace → SPM → BPM Converter<br>
