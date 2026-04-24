@@ -7,8 +7,6 @@ import altair as alt
 # ==================================================
 # PASSWORDS
 # ==================================================
-ADMIN_PASSWORD = "admin"
-
 PREMIUM_PASSWORD = "premium"
 
 # ==================================================
@@ -34,6 +32,9 @@ EVENT_FILE = "events.csv"
 # ==================================================
 def to_minutes(h, m, s):
     return h * 60 + m + s / 60
+
+def pace_to_minutes(mins, secs):
+    return mins + secs / 60
 
 def load_runs():
     if os.path.exists(FILE):
@@ -257,7 +258,7 @@ div.stMarkdown div.card {
 # ==================================================
 st.markdown("""
 <div class="hero">
-    <h2>🏃 Run Performance</h2>
+    <h2>🏃 All in One Running System</h2>
     <p>Garmin-level insights. Strava-grade aesthetics.</p>
 </div>
 """, unsafe_allow_html=True)
@@ -265,23 +266,24 @@ st.markdown("""
 # ==================================================
 # MAIN TABS
 # ==================================================
-tools, log, dash, event, calendar, notes = st.tabs([
+tools, log, dash, event, calendar, notes, system = st.tabs([
     "⚡ Tools",
     "📝 Log Run",
     "📊 Performance",
     "🏁 Event Countdown",
     "📅 Calendar",
-    "🏃 Notes"
-    ])
+    "🏃 Notes",
+    "🛠️ System Enhance"
+])
 
 # ==================================================
 # TOOLS
 # ==================================================
 with tools:
-    pace_converter, speed_converter, thr_bpm_calculator, VO_calculator, BMI_calculator, pace_spm_bpm_converter = st.tabs([
+    pace_converter, speed_converter, hr_cb_calculator, VO_calculator, BMI_calculator, pace_spm_bpm_converter = st.tabs([
         "🧮 Pace Converter",
         "🚀 Speed Converter",
-        "❤️ Heart Rate Calculator",
+        "❤️‍🔥 Heart & Calorie Calculator",
         "📈 VO2 Max Calculator",
         "⚖️ BMI Calculator",
         "⏱️ Pace/SPM/BPM Converter"
@@ -317,9 +319,11 @@ with tools:
         # ---------------- Distance ----------------
         with dist:
             st.markdown("### Distance Calculator")
-            p = st.number_input(
-                "Pace (min/km)", 0.1, step=0.1, value=5.0, key="d_p"
-            )
+
+            st.markdown("**Pace (min/km)**")
+            p1, p2 = st.columns(2)
+            p_min = p1.number_input("Minutes", 0, key="d_p_min")
+            p_sec = p2.number_input("Seconds", 0, 59, key="d_p_sec")
 
             c1, c2, c3 = st.columns(3)
             h = c1.number_input("Hours", 0, key="d_h")
@@ -327,21 +331,29 @@ with tools:
             s = c3.number_input("Seconds", 0, 59, key="d_s")
 
             if st.button("Calculate Distance", key="d_btn"):
+                pace = pace_to_minutes(p_min, p_sec)
                 t = to_minutes(h, m, s)
-                st.success(f"{t / p:.2f} km")
 
+                if pace > 0:
+                    st.success(f"{t / pace:.2f} km")
+                else:
+                    st.error("Pace cannot be 0")
+                    
         # ---------------- Time ----------------
         with time:
             st.markdown("### Time Calculator")
-            d = st.number_input(
-                "Distance (km)", 0.1, step=0.1, value=5.0, key="t_d"
-            )
-            p = st.number_input(
-                "Pace (min/km)", 0.1, step=0.1, value=5.0, key="t_p"
-            )
+
+            d = st.number_input("Distance (km)", 0.1, step=0.1, value=5.0, key="t_d")
+
+            st.markdown("**Pace (min/km)**")
+            p1, p2 = st.columns(2)
+            p_min = p1.number_input("Minutes", 0, key="t_p_min")
+            p_sec = p2.number_input("Seconds", 0, 59, key="t_p_sec")
 
             if st.button("Calculate Time", key="t_btn"):
-                t = d * p
+                pace = pace_to_minutes(p_min, p_sec)
+                t = d * pace
+
                 m = int(t)
                 s = int(round((t - m) * 60))
                 h = m // 60
@@ -405,66 +417,128 @@ with tools:
                 st.warning("Speed must be greater than 0")
 
     # ==================================================
-    # ❤️ HEART RATE CALCULATOR (CONTROLLED FLOW)
+    # ❤️‍🔥 HEART & CALORIE CALCULATOR
     # ==================================================
-    with thr_bpm_calculator:
-        st.markdown("### ❤️ Target Heart Rate (BPM) Calculator")
+    with hr_cb_calculator:
+        heart_rate, calorie_burn = st.tabs([
+            "❤️ Heart Rate Zones Calculator",
+            "🔥 Calorie Burn Calculator"
+        ])
+        with heart_rate:
+            st.markdown("### ❤️ Heart Rate Zones Calculator")
 
-        age = st.number_input("Enter your age", min_value=0, step=1)
+            age = st.number_input("Enter your age", min_value=0, step=1)
 
-        if age <= 19:
-            st.warning("Please enter an age greater than 19 for accurate heart rate zones.")
-        else:
-            # ---------------- FORMULA ----------------
-            formula = st.selectbox(
-                "Select Formula",
-                ["Standard (220 - age)", "Tanaka (208 - 0.7 × age)"]
-            )
-
-            # ---------------- MAX HR ----------------
-            if formula == "Standard (220 - age)":
-                max_hr = 220 - age
+            if age <= 19:
+                st.warning("Please enter an age greater than 19 for accurate heart rate zones.")
             else:
-                max_hr = int(208 - (0.7 * age))
+                # ---------------- FORMULA ----------------
+                formula = st.selectbox(
+                    "Select Formula",
+                    ["Standard (220 - age)", "Tanaka (208 - 0.7 × age)"]
+                )
 
-            st.success(f"🔥 Max Heart Rate: {max_hr} BPM")
+                # ---------------- MAX HR ----------------
+                if formula == "Standard (220 - age)":
+                    max_hr = 220 - age
+                else:
+                    max_hr = int(208 - (0.7 * age))
 
-            # ---------------- ZONES ----------------
-            zones = [
-                ("Maximum (VO2 Max Zone)", "90–100%", "Sprint / Peak"),
-                ("Hard (Anaerobic Zone)", "80–90%", "Performance"),
-                ("Moderate (Aerobic Zone)", "70–80%", "Endurance"),
-                ("Light (Fat Burn Zone)", "60–70%", "Fat Burn"),
-                ("Very Light (Warm Up Zone)", "50–60%", "Recovery / Warm-up"),
-            ]
+                st.success(f"🔥 Max Heart Rate: {max_hr} BPM")
 
-            table_data = []
+                # ---------------- ZONES ----------------
+                zones = [
+                    ("Maximum (VO2 Max Zone)", "90–100%", "Sprint / Peak"),
+                    ("Hard (Anaerobic Zone)", "80–90%", "Performance"),
+                    ("Moderate (Aerobic Zone)", "70–80%", "Endurance"),
+                    ("Light (Fat Burn Zone)", "60–70%", "Fat Burn"),
+                    ("Very Light (Warm Up Zone)", "50–60%", "Recovery / Warm-up"),
+                ]
 
-            for name, percent, purpose in zones:
-                low, high = percent.replace("%", "").split("–")
-                low, high = int(low), int(high)
+                table_data = []
 
-                low_bpm = int(max_hr * low / 100)
-                high_bpm = int(max_hr * high / 100)
+                for name, percent, purpose in zones:
+                    low, high = percent.replace("%", "").split("–")
+                    low, high = int(low), int(high)
 
-                table_data.append({
-                    "Zone": name,
-                    "Intensity (%)": percent,
-                    "Heart Rate (BPM)": f"{low_bpm} - {high_bpm}",
-                    "Purpose": purpose
-                })
+                    low_bpm = int(max_hr * low / 100)
+                    high_bpm = int(max_hr * high / 100)
 
-            df_zones = pd.DataFrame(table_data)
+                    table_data.append({
+                        "Zone": name,
+                        "Intensity (%)": percent,
+                        "Heart Rate (BPM)": f"{low_bpm} - {high_bpm}",
+                        "Purpose": purpose
+                    })
 
-            st.markdown("### 📊 Heart Rate Zones Table")
-            st.table(df_zones)
+                df_zones = pd.DataFrame(table_data)
 
-            st.markdown("""
-            💡 **Training Tips:**
-            - 🔵 Lower zones → recovery & fat burn  
-            - 🟢 Moderate → endurance  
-            - 🔴 High zones → intervals & performance  
-            """)
+                st.markdown("### 📊 Heart Rate Zones Table")
+                st.table(df_zones)
+
+                st.markdown("""
+                💡 **Training Tips:**
+                - 🔵 Lower zones → recovery & fat burn  
+                - 🟢 Moderate → endurance  
+                - 🔴 High zones → intervals & performance  
+                """)
+
+            # ==================================================
+            # 🔥 ADVANCED CALORIE ESTIMATOR (NO BPM REQUIRED)
+            # ==================================================
+            with calorie_burn:
+                st.markdown("### 🔥 Calorie Burn Calculator")
+
+                weight = st.number_input("Enter your weight (kg)", min_value=1.0, step=0.1)
+
+                # ---------------- INPUT RUN DATA ----------------
+                c1, c2, c3 = st.columns(3)
+                h = c1.number_input("Hours", 0)
+                m = c2.number_input("Minutes", 0)
+                s = c3.number_input("Seconds", 0, 59)
+                distance = st.number_input("Distance (km)", min_value=0.1, step=0.1)
+
+
+                # ---------------- CALCULATE TIME ----------------
+                time_hours = h + m / 60 + s / 3600
+                time_minutes = time_hours * 60
+
+                if st.button("Calculate Calories (Smart Mode)"):
+
+                    if weight > 0 and time_hours > 0 and distance > 0:
+
+                        # ---------------- PACE ----------------
+                        pace = time_minutes / distance  # min/km
+
+                        # ---------------- ESTIMATED INTENSITY (NO BPM) ----------------
+                        if pace <= 5:
+                            zone = "Maximum (VO2 Max Zone)"
+                            met = 12.0
+                        elif pace <= 6:
+                            zone = "Hard (Anaerobic Zone)"
+                            met = 10.0
+                        elif pace <= 7.5:
+                            zone = "Moderate (Aerobic Zone)"
+                            met = 8.3
+                        elif pace <= 9:
+                            zone = "Light (Fat Burn Zone)"
+                            met = 6.0
+                        else:
+                            zone = "Very Light (Warm Up Zone)"
+                            met = 3.5
+
+                        # ---------------- CALORIES ----------------
+                        calories = met * weight * time_hours
+
+                        # ---------------- OUTPUT ----------------
+                        st.info(f"📊 Estimated Effort Zone: {zone}")
+                        st.info(f"🏃 Pace: {pace:.2f} min/km")
+
+                        st.success(f"🔥 Estimated Calories Burned: {calories:.0f} kcal")
+
+                    else:
+                        st.error("Please enter valid values")
+
     # ==================================================
     # 📈 VO2 MAX CALCULATOR (12-MIN COOPER TEST)
     # ==================================================
@@ -503,6 +577,7 @@ with tools:
 
             else:
                 st.warning("Please enter a valid distance.")
+
     # ==================================================
     # ⚖️ BMI CALCULATOR (CONTROLLED FLOW)
     # ==================================================
@@ -539,13 +614,12 @@ with tools:
     if "is_premium" not in st.session_state:
         st.session_state.is_premium = False
 
-
     # ==================================================
-    # ⏱️ PACE → SPM → MUSIC BPM CONVERTER
+    # ⏱️ PACE → SPM → BPM CONVERTER
     # ==================================================
     with pace_spm_bpm_converter:
 
-        st.markdown("### ⏱️ Pace → SPM → Music BPM Converter")
+        st.markdown("### ⏱️ Pace → SPM → BPM Converter")
 
         # ==================================================
         # 🔐 PREMIUM LOGIN
@@ -560,6 +634,7 @@ with tools:
                 color:#ffffff;
                 line-height:1.8;
             ">
+            Premium Feature:
             ⏱️ Pace → SPM → BPM Converter<br>
             🔒 Unlock to access full analytics<br>
             🎧 Spotify integration included<br>
@@ -568,7 +643,7 @@ with tools:
             </div>
             """, unsafe_allow_html=True)
             
-            password = st.text_input("Enter Premium Password", type="password")
+            password = st.text_input("Enter Password to unlock Premium", type="password")
 
             if password == "":
                 st.info("🔒 Premium Feature Locked")
@@ -586,9 +661,13 @@ with tools:
         # 🎯 PREMIUM CONTENT (ONLY SHOW IF UNLOCKED)
         # ==================================================
         if st.session_state.is_premium:
+            
+            # ==================================================
+            # Estimate
+            # ==================================================
 
             # ---------------- EXPANDER ----------------
-            with st.expander("🔎 How this converter works", expanded=True):
+            with st.expander("🔎 How this estimate converter works", expanded=True):
                 st.markdown("""
                 ### 1️⃣ Speed from pace  
                 Speed (km/h) = 60 / Pace (min/km)
@@ -600,73 +679,94 @@ with tools:
                 SPM = 1000 / (Pace × Stride length)
 
                 ### 4️⃣ Music sync model  
-                Music BPM = SPM (1:1 rhythm matching)
+                BPM = SPM (1:1 rhythm matching)
                 """)
 
             # ---------------- INPUTS ----------------
-            c1, c2 = st.columns(2)
+            c1, c2, c3 = st.columns(3)
 
             with c1:
-                pace = st.number_input(
-                    "Average Pace (min/km)",
-                    min_value=0.0,
-                    step=0.01,
-                    key="psp_pace"
+                pace_min = st.number_input(
+                    "Pace (Minutes)",
+                    min_value=0,
+                    step=1,
+                    key="psp_pace_min"
                 )
 
             with c2:
-                height_cm = st.number_input(
-                    "Height (cm)",
+                pace_sec = st.number_input(
+                    "Pace (Seconds)",
                     min_value=0,
+                    max_value=59,
                     step=1,
-                    key="psp_height"
+                    key="psp_pace_sec"
                 )
+
+            with c3:
+                height_cm = st.number_input(
+                "Height (cm)",
+                min_value=0,
+                step=1,
+                key="psp_height"
+            )
 
             # ---------------- CONVERT ----------------
             if st.button("Convert", key="psp_btn"):
 
+                # Convert inputs
+                pace = pace_min + (pace_sec / 60)
                 height_m = height_cm / 100 if height_cm > 0 else 0
 
                 if pace > 0 and height_m > 0:
 
+                    # 1️⃣ Speed
                     speed_kmh = 60 / pace
+
+                    # 2️⃣ Stride
                     stride_length = 0.65 * height_m
+
+                    # 3️⃣ Cadence (SPM)
                     spm = 1000 / (pace * stride_length)
+
+                    # 4️⃣ Music BPM
                     bpm = spm
 
+                    # BPM range for music
                     low_bpm = snap_bpm(bpm - 5)
                     high_bpm = snap_bpm(bpm + 5)
 
+                    # ---------------- OUTPUT ----------------
                     st.success(f"""
                     🚀 **Results**
 
-                    - 🏃 Average Pace: {pace:.2f} min/km  
+                    - 🏃 Average Pace: {pace_min}:{pace_sec:02d} min/km  
                     - ⚡ Average Speed: {speed_kmh:.2f} km/h  
-                    - 📏 Estimated Stride Length: {stride_length:.2f} m  
-                    - 👣 Average Cadence (SPM): {spm:.0f} steps/min  
-                    - 🎵 Average Music BPM: {bpm:.0f} BPM  
+                    - 📏 Estimate Stride Length: {stride_length:.2f} m  
+                    - 👣 Estimate Cadence (SPM): {spm:.0f} steps/min  
+                    - 🎵 Estimate BPM: {bpm:.0f} BPM  
                     """)
 
                     st.info(f"""
-                    🎧 Your best running rhythm music range is:
+                    🎧 Recommended Music Range:
 
-                    **{low_bpm:.0f} BPM to {high_bpm:.0f} BPM**
+                    **{low_bpm:.0f} BPM → {high_bpm:.0f} BPM**
                     """)
 
+                    # ---------------- MUSIC LINKS ----------------
                     st.markdown("### 🎧 Premium Music Access")
 
                     c1, c2 = st.columns(2)
 
                     with c1:
                         st.link_button(
-                            f"🎵 {low_bpm:.0f} BPM",
-                            f"https://open.spotify.com/search/{int(low_bpm)}%20BPM"
+                            f"🎵 {low_bpm:.0f} BPM MIX",
+                            f"https://open.spotify.com/search/{int(low_bpm)}%20BPM%20Mix"
                         )
 
                     with c2:
                         st.link_button(
-                            f"🎵 {high_bpm:.0f} BPM",
-                            f"https://open.spotify.com/search/{int(high_bpm)}%20BPM"
+                            f"🎵 {high_bpm:.0f} BPM MIX",
+                            f"https://open.spotify.com/search/{int(high_bpm)}%20BPM%20Mix"
                         )
 
                 else:
