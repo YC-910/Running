@@ -36,6 +36,31 @@ def to_minutes(h, m, s):
 def pace_to_minutes(mins, secs):
     return mins + secs / 60
 
+def format_time(minutes_float):
+    total_seconds = int(round(minutes_float * 60))
+
+    h = total_seconds // 3600
+    m = (total_seconds % 3600) // 60
+    s = total_seconds % 60
+
+    if h > 0:
+        return f"{h}:{m:02d}:{s:02d}"
+    else:
+        return f"{m}:{s:02d}"
+
+def format_pace(pace_float):
+    pace_min = int(pace_float)
+    pace_sec = int(round((pace_float - pace_min) * 60))
+    return f"{pace_min}:{pace_sec:02d}"
+
+def get_distance_label(D2):
+    if D2 == 42.195:
+        return "Marathon (42.195 km)"
+    elif D2 == 21.0975:
+        return "Half Marathon (21.1 km)"
+    else:
+        return f"{int(D2)} km"
+
 def load_runs():
     if os.path.exists(FILE):
         return pd.read_csv(FILE)
@@ -266,15 +291,15 @@ st.markdown("""
 # ==================================================
 # MAIN TABS
 # ==================================================
-tools, log, dash, event, calendar, notes, system = st.tabs([
+tools, log, race_predictor, dash, event, calendar, notes = st.tabs([
     "⚡ Tools",
     "📝 Log Run",
+    "🏃 Race Predictor",
     "📊 Performance",
     "🏁 Event Countdown",
     "📅 Calendar",
-    "🏃 Notes",
-    "🛠️ System Enhance"
-])
+    "📝 Notes"
+    ])
 
 # ==================================================
 # TOOLS
@@ -498,7 +523,6 @@ with tools:
                 s = c3.number_input("Seconds", 0, 59)
                 distance = st.number_input("Distance (km)", min_value=0.1, step=0.1)
 
-
                 # ---------------- CALCULATE TIME ----------------
                 time_hours = h + m / 60 + s / 3600
                 time_minutes = time_hours * 60
@@ -543,7 +567,7 @@ with tools:
     # 📈 VO2 MAX CALCULATOR (12-MIN COOPER TEST)
     # ==================================================
     with VO_calculator:
-        st.markdown("### 📈 VO2 Max Calculator (12-Min Run)")
+        st.markdown("### 📈 VO2 Max Calculator")
 
         st.info("Enter the distance you ran in 12 minutes to estimate your VO2 Max using the Cooper Test.")
 
@@ -793,6 +817,100 @@ with log:
             "pace_min_per_km": round(t/km,2)
         })
         st.success("Activity saved")
+
+    # ==================================================
+    # 🏃 RACE PREDICTOR
+    # ==================================================
+    with race_predictor:
+
+        st.title("🏃 Race Predictor")
+        st.caption("Predict your race performance based on a known result")
+
+        # =====================
+        # ⏱️ TIME INPUT
+        # =====================
+        st.subheader("⏱️ Enter Your Performance")
+
+        t1_col1, t1_col2, t1_col3 = st.columns(3)
+        hour_input = t1_col1.number_input("Hours", min_value=0, step=1)
+        min_input = t1_col2.number_input("Minutes", min_value=0, step=1)
+        sec_input = t1_col3.number_input("Seconds", min_value=0, max_value=59, step=1)
+
+        # =====================
+        # 📏 DISTANCE INPUT
+        # =====================
+        st.subheader("📏 Select Distance")
+
+        d_col1, d_col2 = st.columns(2)
+
+        distance_option = d_col1.selectbox(
+            "Distance Type",
+            ["5 km", "10 km", "Half Marathon", "Marathon", "Custom"]
+        )
+
+        if distance_option == "Custom":
+            D1 = d_col2.number_input("Custom Distance (km)", min_value=0.1, value=5.0)
+        elif distance_option == "5 km":
+            D1 = 5.0
+        elif distance_option == "10 km":
+            D1 = 10.0
+        elif distance_option == "Half Marathon":
+            D1 = 21.0975
+        else:
+            D1 = 42.195
+
+        # Convert to minutes
+        T1 = (hour_input * 60) + min_input + (sec_input / 60)
+
+        st.divider()
+
+        # =====================
+        # 📊 DISTANCE LIST
+        # =====================
+        distances = sorted(
+            [d for d in range(1, 43) if d not in (21, 42)] + [21.0975, 42.195]
+        )
+
+        # =====================
+        # 📈 CALCULATION
+        # =====================
+        if T1 > 0:
+
+            data = []
+
+            for D2 in distances:
+
+                # Fix: same distance → same time
+                if abs(D2 - D1) <= 0.1:
+                    T2 = T1
+                else:
+                    T2 = T1 * (D2 / D1) ** 1.06
+
+                pace = T2 / D2
+
+                data.append([
+                    get_distance_label(D2),
+                    format_time(T2),
+                    format_pace(pace)
+                ])
+
+            df = pd.DataFrame(data, columns=[
+                "Distance",
+                "Finish Time",
+                "Pace (/km)"
+            ])
+
+            # =====================
+            # 📋 OUTPUT TABLE
+            # =====================
+            st.subheader("📊 Predicted Results")
+
+            df_display = df.reset_index(drop=True)
+
+            st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+        else:
+            st.info("Enter your time to see predictions")
 
 # ==================================================
 # DASHBOARD
