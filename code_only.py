@@ -298,8 +298,8 @@ tools, log, race_predictor, dash, event, calendar, notes = st.tabs([
     "📊 Performance",
     "🏁 Event Countdown",
     "📅 Calendar",
-    "📝 Notes"
-    ])
+    "📝 Notes",
+])
 
 # ==================================================
 # TOOLS
@@ -452,7 +452,7 @@ with tools:
         with heart_rate:
             st.markdown("### ❤️ Heart Rate Zones Calculator")
 
-            age = st.number_input("Enter your age", min_value=0, step=1)
+            age = st.number_input("Enter your age, minimum is 20", min_value=0, step=1, value=20)
 
             if age <= 19:
                 st.warning("Please enter an age greater than 19 for accurate heart rate zones.")
@@ -616,19 +616,33 @@ with tools:
                 height_m = height / 100  # convert to meters
                 bmi = weight / (height_m ** 2)
 
-                st.success(f"⚖️ Your BMI: **{bmi:.1f}**")
-
-                # -------- Interpretation --------
+                # -------- Interpretation + Color --------
                 if bmi < 18.5:
-                    category = "🔴 Underweight"
+                    category = "Underweight"
+                    color = "red"
                 elif bmi < 25:
-                    category = "🟢 Normal weight"
+                    category = "Normal weight"
+                    color = "green"
                 elif bmi < 30:
-                    category = "🟠 Overweight"
+                    category = "Overweight"
+                    color = "orange"
                 else:
-                    category = "🔴 Obese"
+                    category = "Obese"
+                    color = "red"   # change to "orange" if you prefer
 
-                st.markdown(f"💡 **Category:** {category}")
+                # -------- Styled Output --------
+                st.markdown(
+                    f"""
+                    <div style="padding:15px;border-radius:10px;background-color:#f9f9f9;">
+                        <h2 style="color:{color};margin:0;">⚖️ BMI: {bmi:.1f}</h2>
+                        <p style="color:{color};font-size:18px;margin:5px 0;">
+                            <b>Category: {category}</b>
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
             else:
                 st.warning("Please enter valid weight and height.")
 
