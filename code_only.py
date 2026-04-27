@@ -240,7 +240,7 @@ def create_user(name, user_id, password):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO Users (name, user_id, password)
+        INSERT INTO "Users" (name, user_id, password)
         VALUES (%s, %s, %s)
     """, (name, user_id, password))
 
