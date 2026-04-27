@@ -290,22 +290,24 @@ def create_run(date, distance_km, time_min, pace):
     cursor.execute("""
         INSERT INTO Runs (date, distance_km, time_min, pace_min_per_km, user_id)
         VALUES (%s, %s, %s, %s, %s)
-    """,
-    date,   # ✅ Python date object
-    distance_km,
-    time_min,
-    pace,
-    st.session_state.user_db_id
-    )
+    """, (
+        date,
+        distance_km,
+        time_min,
+        pace,
+        st.session_state.user_db_id
+    ))
 
     conn.commit()
     conn.close()
 
 def read_runs():
+
     conn = get_connection()
 
     df = pd.read_sql("""
-        SELECT * FROM "Runs"
+        SELECT *
+        FROM Runs
         WHERE user_id = %s
         ORDER BY date DESC
     """, conn, params=[st.session_state.user_db_id])
@@ -320,10 +322,19 @@ def update_run(run_id, date, distance_km, time_min, pace):
 
     cursor.execute("""
         UPDATE Runs
-        SET date = %s, distance_km = %s, time_min = %s, pace_min_per_km = %s
+        SET date = %s,
+            distance_km = %s,
+            time_min = %s,
+            pace_min_per_km = %s
         WHERE id = %s AND user_id = %s
-    """,
-    (date, distance_km, time_min, pace, run_id, st.session_state.user_db_id))
+    """, (
+        date,
+        distance_km,
+        time_min,
+        pace,
+        run_id,
+        st.session_state.user_db_id
+    ))
 
     conn.commit()
     conn.close()
@@ -334,10 +345,12 @@ def delete_run(run_id):
     cursor = conn.cursor()
 
     cursor.execute("""
-        DELETE FROM "Runs"
+        DELETE FROM Runs
         WHERE id = %s AND user_id = %s
-    """,
-    (run_id, st.session_state.user_db_id))
+    """, (
+        run_id,
+        st.session_state.user_db_id
+    ))
 
     conn.commit()
     conn.close()
@@ -639,7 +652,7 @@ if st.session_state.logged_in:
     # ==================================================
     # MAIN TABS
     # ==================================================
-    tools, log, race_predictor, dash, event, calendar, notes, system = st.tabs([
+    tools, log, race_predictor, dash, event, calendar, notes = st.tabs([
         "⚡ Tools",
         "📝 Log Run",
         "🏃 Race Predictor",
@@ -647,7 +660,6 @@ if st.session_state.logged_in:
         "🏁 Event Countdown",
         "📅 Calendar",
         "📝 Notes",
-        "🛠️ System Enhance"
     ])
 
     # ==================================================
