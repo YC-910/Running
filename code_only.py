@@ -178,7 +178,7 @@ def save_events(df):
     """, (st.session_state.user_db_id,))
 
     # get safe starting id from DB (IMPORTANT)
-    cursor.execute("SELECT ISNULL(MAX(id), 0) FROM 'Events'")
+    cursor.execute('SELECT COALESCE(MAX(id), 0) FROM "Events"')
     base_id = cursor.fetchone()[0]
 
     for i, row in enumerate(df.itertuples(), start=1):
