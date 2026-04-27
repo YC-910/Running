@@ -105,13 +105,15 @@ def save_run(run):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO "Runs" (date, distance_km, time_min, pace_min_per_km)
-        VALUES (%s, %s, %s, %s)
-    """,
-    run["date"],
-    run["distance_km"],
-    run["time_min"],
-    run["pace_min_per_km"])
+    INSERT INTO "Runs" (date, distance_km, time_min, pace_min_per_km, user_id)
+    VALUES (%s, %s, %s, %s, %s)
+    """, (
+        date,
+        distance_km,
+        time_min,
+        pace,
+        st.session_state.user_db_id
+    ))
 
     conn.commit()
     conn.close()
