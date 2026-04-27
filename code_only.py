@@ -254,7 +254,7 @@ def get_user(user_id, password):
 
     cursor.execute("""
         SELECT id, name
-        FROM Users
+        FROM "Users"
         WHERE user_id = %s AND password = %s
     """, (user_id, password))
 
@@ -269,7 +269,7 @@ def check_user_exists(user_id):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT * FROM Users WHERE user_id = %s
+        SELECT * FROM "Users" WHERE user_id = %s
     """, (user_id,))
 
     user = cursor.fetchone()
