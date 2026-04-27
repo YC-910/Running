@@ -6,11 +6,7 @@ import psycopg2
 
 def get_connection():
     return psycopg2.connect(
-        host="db.ibulpdvkvyqwbjdkhsms.supabase.co",
-        database="postgres",
-        user="postgres",
-        password="fitnessstreamlit",   # your REAL password here
-        port=5432
+        "postgresql://postgres.ibulpdvkvyqwbjdkhsms:fitnessstreamlit@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres"
     )
 
 # ==================================================
