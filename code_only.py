@@ -1447,7 +1447,7 @@ if st.session_state.logged_in:
 
                 # -------- Delete --------
                 with col2:
-                    if st.button(f"Delete"):
+                    if st.button(f"Delete {row['id']}"):
 
                         df_events = df_events[df_events["id"] != row["id"]]
                         save_events(df_events)
