@@ -175,7 +175,7 @@ def save_events(df):
     cursor.execute("""
         DELETE FROM "Events"
         WHERE user_id = %s
-    """, st.session_state.user_db_id)
+    """, (st.session_state.user_db_id,))
 
     # get safe starting id from DB (IMPORTANT)
     cursor.execute("SELECT ISNULL(MAX(id), 0) FROM 'Events'")
