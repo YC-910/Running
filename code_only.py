@@ -94,7 +94,7 @@ def snap_bpm(x):
 # ==================================================
 def read_runs():
     conn = get_connection()
-    query = "SELECT * FROM Runs"
+    query = "SELECT * FROM 'Runs'"
     df = pd.read_sql(query, conn)
     conn.close()
     return df
@@ -105,7 +105,7 @@ def save_run(run):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO Runs (date, distance_km, time_min, pace_min_per_km)
+        INSERT INTO "Runs" (date, distance_km, time_min, pace_min_per_km)
         VALUES (%s, %s, %s, %s)
     """,
     run["date"],
@@ -288,7 +288,7 @@ def create_run(date, distance_km, time_min, pace):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO Runs (date, distance_km, time_min, pace_min_per_km, user_id)
+        INSERT INTO "Runs" (date, distance_km, time_min, pace_min_per_km, user_id)
         VALUES (%s, %s, %s, %s, %s)
     """, (
         date,
@@ -307,7 +307,7 @@ def read_runs():
 
     df = pd.read_sql("""
         SELECT *
-        FROM Runs
+        FROM "Runs"
         WHERE user_id = %s
         ORDER BY date DESC
     """, conn, params=[st.session_state.user_db_id])
@@ -321,7 +321,7 @@ def update_run(run_id, date, distance_km, time_min, pace):
     cursor = conn.cursor()
 
     cursor.execute("""
-        UPDATE Runs
+        UPDATE "Runs"
         SET date = %s,
             distance_km = %s,
             time_min = %s,
@@ -345,7 +345,7 @@ def delete_run(run_id):
     cursor = conn.cursor()
 
     cursor.execute("""
-        DELETE FROM Runs
+        DELETE FROM "Runs"
         WHERE id = %s AND user_id = %s
     """, (
         run_id,
