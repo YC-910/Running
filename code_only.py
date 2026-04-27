@@ -3,7 +3,6 @@ import pandas as pd
 from datetime import date
 import altair as alt
 import psycopg2
-import pyodbc
 
 def get_connection():
     return psycopg2.connect(
