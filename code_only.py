@@ -361,19 +361,17 @@ def create_note(note):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+   cursor.execute("""
         INSERT INTO "Notes" (id, date, title, content, tags, user_id)
         VALUES (%s, %s, %s, %s, %s, %s)
-    """,
-    note["id"],
-    note["date"],
-    note["title"],
-    note["content"],
-    note.get("tags", None),
-    st.session_state.user_db_id)
-
-    conn.commit()
-    conn.close()
+    """, (
+        note["id"],
+        note["date"],
+        note["title"],
+        note["content"],
+        note.get("tags", None),
+        st.session_state.user_db_id
+    ))
 
 def read_notes():
     conn = get_connection()
