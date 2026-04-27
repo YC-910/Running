@@ -143,10 +143,9 @@ def save_notes(df):
 
     for _, row in df.iterrows():
         cursor.execute("""
-            INSERT INTO "Notes" (id, date, title, content, tags, user_id)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO "Notes" (date, title, content, tags, user_id)
+            VALUES (%s, %s, %s, %s, %s)
         """, (
-            new_id,
             row["date"],
             row["title"],
             row["content"],
@@ -362,10 +361,9 @@ def create_note(note):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO "Notes" (id, date, title, content, tags, user_id)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        INSERT INTO "Notes" (date, title, content, tags, user_id)
+        VALUES (%s, %s, %s, %s, %s)
     """, (
-        new_id,
         row["date"],
         row["title"],
         row["content"],
