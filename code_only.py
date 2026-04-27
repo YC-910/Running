@@ -1612,16 +1612,15 @@ if st.session_state.logged_in:
                     cursor.execute('SELECT COALESCE(MAX(id), 0) + 1 FROM "Notes"')
                     new_id = cursor.fetchone()[0]
                     cursor.execute("""
-                        INSERT INTO Notes (id, date, title, content, tags, user_id)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                    """,
-                    new_id,
-                    date.today().strftime("%Y-%m-%d"),
-                    note_title,
-                    note_content,
-                    None,
-                    st.session_state.user_db_id
-                    )
+                        INSERT INTO "Notes" (date, title, content, tags, user_id)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (
+                        row["date"],
+                        row["title"],
+                        row["content"],
+                        row.get("tags"),
+                        st.session_state.user_db_id
+                    ))
 
                     conn.commit()
                     conn.close()
