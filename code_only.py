@@ -185,12 +185,13 @@ def save_events(df):
         cursor.execute("""
             INSERT INTO "Events" (id, name, date, description, user_id)
             VALUES (%s, %s, %s, %s, %s)
-        """,
-        base_id + i,
-        row.name,
-        row.date,
-        row.description,
-        st.session_state.user_db_id)
+        """, (
+            base_id + i,
+            row.name,
+            row.date,
+            row.description,
+            st.session_state.user_db_id
+        ))
 
     conn.commit()
     conn.close()
