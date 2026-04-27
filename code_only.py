@@ -105,15 +105,13 @@ def save_run(run):
     cursor = conn.cursor()
 
     cursor.execute("""
-    INSERT INTO "Runs" (date, distance_km, time_min, pace_min_per_km, user_id)
-    VALUES (%s, %s, %s, %s, %s)
-    """, (
-        date,
-        distance_km,
-        time_min,
-        pace,
-        st.session_state.user_db_id
-    ))
+        INSERT INTO "Runs" (date, distance_km, time_min, pace_min_per_km)
+        VALUES (%s, %s, %s, %s)
+    """,
+    run["date"],
+    run["distance_km"],
+    run["time_min"],
+    run["pace_min_per_km"])
 
     conn.commit()
     conn.close()
@@ -177,22 +175,23 @@ def save_events(df):
     cursor.execute("""
         DELETE FROM "Events"
         WHERE user_id = %s
-    """, (st.session_state.user_db_id,))
+    """, st.session_state.user_db_id)
 
     # get safe starting id from DB (IMPORTANT)
-    cursor.execute('SELECT COALESCE(MAX(id), 0) FROM "Events"')
+    cursor.execute("SELECT ISNULL(MAX(id), 0) FROM 'Events'")
     base_id = cursor.fetchone()[0]
 
     for i, row in enumerate(df.itertuples(), start=1):
         cursor.execute("""
-            INSERT INTO "Events" (name, date, description, user_id)
-            VALUES (%s, %s, %s, %s)
-        """, (
-            row.name,
-            row.date,
-            row.description,
-            st.session_state.user_db_id
-        ))
+            INSERT INTO "Events" (id, name, date, description, user_id)
+            VALUES (%s, %s, %s, %s, %s)
+        """,
+        base_id + i,
+        row.name,
+        row.date,
+        row.description,
+        st.session_state.user_db_id)
+
     conn.commit()
     conn.close()
 
@@ -1442,13 +1441,13 @@ if st.session_state.logged_in:
 
                 # -------- Edit --------
                 with col1:
-                    if st.button(f"Edit {row['id']}"):
+                    if st.button(f"Edit"):
 
                         st.session_state["edit_event"] = row["id"]
 
                 # -------- Delete --------
                 with col2:
-                    if st.button(f"Delete {row['id']}"):
+                    if st.button(f"Delete"):
 
                         df_events = df_events[df_events["id"] != row["id"]]
                         save_events(df_events)
