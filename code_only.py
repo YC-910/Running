@@ -119,7 +119,7 @@ def save_run(run):
 def load_notes():
     conn = get_connection()
     df = pd.read_sql("""
-        SELECT * FROM Notes
+        SELECT * FROM "Notes"
         WHERE user_id = %s
         ORDER BY date DESC
     """, conn, params=[st.session_state.user_db_id])
@@ -132,7 +132,7 @@ def save_notes(df):
     cursor = conn.cursor()
 
     cursor.execute("""
-        DELETE FROM Notes
+        DELETE FROM "Notes"
         WHERE user_id = %s
     """, (st.session_state.user_db_id,))
 
@@ -143,7 +143,7 @@ def save_notes(df):
 
     for _, row in df.iterrows():
         cursor.execute("""
-            INSERT INTO Notes (id, date, title, content, tags, user_id)
+            INSERT INTO "Notes" (id, date, title, content, tags, user_id)
             VALUES (%s, %s, %s, %s, %s, %s)
         """,
         int(row["id"]),
@@ -348,7 +348,7 @@ def create_note(note):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO Notes (id, date, title, content, tags, user_id)
+        INSERT INTO "Notes" (id, date, title, content, tags, user_id)
         VALUES (%s, %s, %s, %s, %s, %s)
     """,
     note["id"],
@@ -376,11 +376,9 @@ def update_note(note_id, title, content, tags=None):
     cursor = conn.cursor()
 
     cursor.execute("""
-        UPDATE Notes
-        SET title = %s, content = %s, tags = %
-s
-        WHERE id = %s AND user_id = %
-s
+        UPDATE "Notes"
+        SET title = %s, content = %s, tags = %s
+        WHERE id = %s AND user_id = %s
     """,
     (title, content, tags, note_id, st.session_state.user_db_id)
 )
