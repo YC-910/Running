@@ -179,9 +179,10 @@ def save_events(df):
 
     # get safe starting id from DB (IMPORTANT)
     cursor.execute("""
-        INSERT INTO "Events" (name, date, description, user_id)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO "Events" (id, name, date, description, user_id)
+        VALUES (%s, %s, %s, %s, %s)
     """, (
+        base_id + i,
         row.name,
         row.date,
         row.description,
