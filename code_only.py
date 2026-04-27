@@ -1598,33 +1598,30 @@ if st.session_state.logged_in:
             with st.form("add_note_form", clear_on_submit=True):
                 note_title = st.text_input("Title")
                 note_content = st.text_area("Note", height=120)
-
+        
                 submitted = st.form_submit_button("Save Note")
-
+        
             if submitted:
                 if note_title.strip() == "" or note_content.strip() == "":
                     st.warning("Title and note cannot be empty.")
                 else:
                     conn = get_connection()
                     cursor = conn.cursor()
-
-                    # ✅ get next valid ID from SQL (not dataframe)
-                    cursor.execute('SELECT COALESCE(MAX(id), 0) + 1 FROM "Notes"')
-                    new_id = cursor.fetchone()[0]
+        
                     cursor.execute("""
                         INSERT INTO "Notes" (date, title, content, tags, user_id)
                         VALUES (%s, %s, %s, %s, %s)
                     """, (
-                        row["date"],
-                        row["title"],
-                        row["content"],
-                        row.get("tags"),
+                        date.today().strftime("%Y-%m-%d"),
+                        note_title,
+                        note_content,
+                        None,
                         st.session_state.user_db_id
                     ))
-
+        
                     conn.commit()
                     conn.close()
-
+        
                     st.success("Note saved ✔️")
                     st.rerun()
 
