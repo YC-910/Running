@@ -2,25 +2,18 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 import altair as alt
-import pyodbc
 import psycopg2
-
-conn = psycopg2.connect(
-    host="db.ibulpdvkvyqwbjdkhsms.supabase.co", 
-    database="postgres", 
-    user="postgres", 
-    password="Pengbin@12085058", 
-    port=5432 
-    )
+import pyodbc
 
 def get_connection():
-    conn = pyodbc.connect(
-        "DRIVER={ODBC Driver 17 for SQL Server};"
-        "SERVER=YCLAPTOP\\SQLSERVEREXPRESS;"   # change if needed
-        "DATABASE=Fitness;"                   # your DB name
-        "Trusted_Connection=yes;"
+    return psycopg2.connect(
+        host="db.ibulpdvkvyqwbjdkhsms.supabase.co",
+        database="postgres",
+        user="postgres",
+        password="YOUR_PASSWORD",
+        port=5432
     )
-    return conn
+
 # ==================================================
 # PASSWORDS
 # ==================================================
