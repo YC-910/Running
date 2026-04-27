@@ -106,7 +106,7 @@ def save_run(run):
 
     cursor.execute("""
         INSERT INTO Runs (date, distance_km, time_min, pace_min_per_km)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     """,
     run["date"],
     run["distance_km"],
@@ -120,7 +120,7 @@ def load_notes():
     conn = get_connection()
     df = pd.read_sql("""
         SELECT * FROM Notes
-        WHERE user_id = ?
+        WHERE user_id = %s
         ORDER BY date DESC
     """, conn, params=[st.session_state.user_db_id])
     conn.close()
@@ -133,8 +133,8 @@ def save_notes(df):
 
     cursor.execute("""
         DELETE FROM Notes
-        WHERE user_id = ?
-    """, st.session_state.user_db_id)
+        WHERE user_id = %s
+    """, (st.session_state.user_db_id,))
 
     def clean(val):
         if pd.isna(val):
@@ -144,7 +144,7 @@ def save_notes(df):
     for _, row in df.iterrows():
         cursor.execute("""
             INSERT INTO Notes (id, date, title, content, tags, user_id)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """,
         int(row["id"]),
         row["date"],
@@ -161,7 +161,7 @@ def load_events():
     conn = get_connection()
     df = pd.read_sql("""
         SELECT * FROM Events
-        WHERE user_id = ?
+        WHERE user_id = %s
         ORDER BY date ASC
     """, conn, params=[st.session_state.user_db_id])
     conn.close()
@@ -174,7 +174,7 @@ def save_events(df):
     # ONLY delete current user's events (NOT ALL USERS)
     cursor.execute("""
         DELETE FROM Events
-        WHERE user_id = ?
+        WHERE user_id = %s
     """, st.session_state.user_db_id)
 
     # get safe starting id from DB (IMPORTANT)
@@ -184,7 +184,7 @@ def save_events(df):
     for i, row in enumerate(df.itertuples(), start=1):
         cursor.execute("""
             INSERT INTO Events (id, name, date, description, user_id)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s)
         """,
         base_id + i,
         row.name,
@@ -241,7 +241,7 @@ def create_user(name, user_id, password):
 
     cursor.execute("""
         INSERT INTO Users (name, user_id, password)
-        VALUES (?, ?, ?)
+        VALUES (%s, %s, %s)
     """, (name, user_id, password))
 
     conn.commit()
@@ -253,8 +253,9 @@ def get_user(user_id, password):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, name FROM Users
-        WHERE user_id = ? AND password = ?
+        SELECT id, name
+        FROM Users
+        WHERE user_id = %s AND password = %s
     """, (user_id, password))
 
     user = cursor.fetchone()
@@ -268,7 +269,7 @@ def check_user_exists(user_id):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT * FROM Users WHERE user_id = ?
+        SELECT * FROM Users WHERE user_id = %s
     """, (user_id,))
 
     user = cursor.fetchone()
@@ -288,7 +289,7 @@ def create_run(date, distance_km, time_min, pace):
 
     cursor.execute("""
         INSERT INTO Runs (date, distance_km, time_min, pace_min_per_km, user_id)
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s)
     """,
     date,   # ✅ Python date object
     distance_km,
@@ -305,7 +306,7 @@ def read_runs():
 
     df = pd.read_sql("""
         SELECT * FROM Runs
-        WHERE user_id = ?
+        WHERE user_id = %s
         ORDER BY date DESC
     """, conn, params=[st.session_state.user_db_id])
 
@@ -319,12 +320,10 @@ def update_run(run_id, date, distance_km, time_min, pace):
 
     cursor.execute("""
         UPDATE Runs
-        SET date = ?, distance_km = ?, time_min = ?, pace_min_per_km = ?
-        WHERE id = ? AND user_id = ?
+        SET date = %s, distance_km = %s, time_min = %s, pace_min_per_km = %s
+        WHERE id = %s AND user_id = %s
     """,
-    date, distance_km, time_min, pace,
-    run_id,
-    st.session_state.user_db_id)
+    (date, distance_km, time_min, pace, run_id, st.session_state.user_db_id))
 
     conn.commit()
     conn.close()
@@ -336,10 +335,9 @@ def delete_run(run_id):
 
     cursor.execute("""
         DELETE FROM Runs
-        WHERE id = ? AND user_id = ?
+        WHERE id = %s AND user_id = %s
     """,
-    run_id,
-    st.session_state.user_db_id)
+    (run_id, st.session_state.user_db_id))
 
     conn.commit()
     conn.close()
@@ -351,7 +349,7 @@ def create_note(note):
 
     cursor.execute("""
         INSERT INTO Notes (id, date, title, content, tags, user_id)
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s)
     """,
     note["id"],
     note["date"],
@@ -367,7 +365,7 @@ def read_notes():
     conn = get_connection()
     df = pd.read_sql("""
         SELECT * FROM Notes
-        WHERE user_id = ?
+        WHERE user_id = %s
         ORDER BY date DESC
     """, conn, params=[st.session_state.user_db_id])
     conn.close()
@@ -379,10 +377,13 @@ def update_note(note_id, title, content, tags=None):
 
     cursor.execute("""
         UPDATE Notes
-        SET title = ?, content = ?, tags = ?
-        WHERE id = ? AND user_id = ?
+        SET title = %s, content = %s, tags = %
+s
+        WHERE id = %s AND user_id = %
+s
     """,
-    title, content, tags, note_id, st.session_state.user_db_id)
+    (title, content, tags, note_id, st.session_state.user_db_id)
+)
 
     conn.commit()
     conn.close()
@@ -393,10 +394,9 @@ def delete_note(note_id):
 
     cursor.execute("""
         DELETE FROM Notes
-        WHERE id = ? AND user_id = ?
+        WHERE id = %s AND user_id = %s
     """,
-    note_id,
-    st.session_state.user_db_id)
+    (note_id, st.session_state.user_db_id))
 
     conn.commit()
     conn.close()
@@ -408,7 +408,7 @@ def create_event(name, date, description):
 
     cursor.execute("""
         INSERT INTO Events (name, date, description, user_id)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     """,
     name,
     date,
@@ -430,8 +430,9 @@ def update_event(event_id, name, date, description):
 
     cursor.execute("""
         UPDATE Events
-        SET name = ?, date = ?, description = ?
-        WHERE id = ?
+        SET name = %s, date = %s, description = %
+s
+        WHERE id = %s
     """,
     name, date, description, event_id)
 
@@ -442,7 +443,7 @@ def delete_event(event_id):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("DELETE FROM Events WHERE id = ?", event_id)
+    cursor.execute("DELETE FROM Events WHERE id = %s", (event_id,))
 
     conn.commit()
     conn.close()
@@ -1604,7 +1605,7 @@ if st.session_state.logged_in:
 
                     cursor.execute("""
                         INSERT INTO Notes (id, date, title, content, tags, user_id)
-                        VALUES (?, ?, ?, ?, ?, ?)
+                        VALUES (%s, %s, %s, %s, %s, %s)
                     """,
                     new_id,
                     date.today().strftime("%Y-%m-%d"),
