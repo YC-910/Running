@@ -3,6 +3,15 @@ import pandas as pd
 from datetime import date
 import altair as alt
 import pyodbc
+import psycopg2
+
+conn = psycopg2.connect(
+    host="db.ibulpdvkvyqwbjdkhsms.supabase.co", 
+    database="postgres", 
+    user="postgres", 
+    password="Pengbin@12085058", 
+    port=5432 
+    )
 
 def get_connection():
     conn = pyodbc.connect(
