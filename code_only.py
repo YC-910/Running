@@ -160,7 +160,7 @@ def save_notes(df):
 def load_events():
     conn = get_connection()
     df = pd.read_sql("""
-        SELECT * FROM Events
+        SELECT * FROM "Events"
         WHERE user_id = %s
         ORDER BY date ASC
     """, conn, params=[st.session_state.user_db_id])
@@ -173,17 +173,17 @@ def save_events(df):
 
     # ONLY delete current user's events (NOT ALL USERS)
     cursor.execute("""
-        DELETE FROM Events
+        DELETE FROM "Events"
         WHERE user_id = %s
     """, st.session_state.user_db_id)
 
     # get safe starting id from DB (IMPORTANT)
-    cursor.execute("SELECT ISNULL(MAX(id), 0) FROM Events")
+    cursor.execute("SELECT ISNULL(MAX(id), 0) FROM 'Events'")
     base_id = cursor.fetchone()[0]
 
     for i, row in enumerate(df.itertuples(), start=1):
         cursor.execute("""
-            INSERT INTO Events (id, name, date, description, user_id)
+            INSERT INTO "Events" (id, name, date, description, user_id)
             VALUES (%s, %s, %s, %s, %s)
         """,
         base_id + i,
@@ -407,7 +407,7 @@ def create_event(name, date, description):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO Events (name, date, description, user_id)
+        INSERT INTO "Events" (name, date, description, user_id)
         VALUES (%s, %s, %s, %s)
     """,
     name,
@@ -429,7 +429,7 @@ def update_event(event_id, name, date, description):
     cursor = conn.cursor()
 
     cursor.execute("""
-        UPDATE Events
+        UPDATE "Events"
         SET name = %s, date = %s, description = %s
         WHERE id = %s
     """,
