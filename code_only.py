@@ -305,7 +305,7 @@ def read_runs():
     conn = get_connection()
 
     df = pd.read_sql("""
-        SELECT * FROM Runs
+        SELECT * FROM "Runs"
         WHERE user_id = %s
         ORDER BY date DESC
     """, conn, params=[st.session_state.user_db_id])
@@ -334,7 +334,7 @@ def delete_run(run_id):
     cursor = conn.cursor()
 
     cursor.execute("""
-        DELETE FROM Runs
+        DELETE FROM "Runs"
         WHERE id = %s AND user_id = %s
     """,
     (run_id, st.session_state.user_db_id))
@@ -364,7 +364,7 @@ def create_note(note):
 def read_notes():
     conn = get_connection()
     df = pd.read_sql("""
-        SELECT * FROM Notes
+        SELECT * FROM "Notes"
         WHERE user_id = %s
         ORDER BY date DESC
     """, conn, params=[st.session_state.user_db_id])
@@ -393,7 +393,7 @@ def delete_note(note_id):
     cursor = conn.cursor()
 
     cursor.execute("""
-        DELETE FROM Notes
+        DELETE FROM "Notes"
         WHERE id = %s AND user_id = %s
     """,
     (note_id, st.session_state.user_db_id))
@@ -420,7 +420,7 @@ def create_event(name, date, description):
 
 def read_events():
     conn = get_connection()
-    df = pd.read_sql("SELECT * FROM Events ORDER BY date ASC", conn)
+    df = pd.read_sql("SELECT * FROM 'Events' ORDER BY date ASC", conn)
     conn.close()
     return df
 
@@ -430,11 +430,10 @@ def update_event(event_id, name, date, description):
 
     cursor.execute("""
         UPDATE Events
-        SET name = %s, date = %s, description = %
-s
+        SET name = %s, date = %s, description = %s
         WHERE id = %s
     """,
-    name, date, description, event_id)
+    (name, date, description, event_id))
 
     conn.commit()
     conn.close()
@@ -443,7 +442,7 @@ def delete_event(event_id):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("DELETE FROM Events WHERE id = %s", (event_id,))
+    cursor.execute("DELETE FROM 'Events' WHERE id = %s", (event_id,))
 
     conn.commit()
     conn.close()
