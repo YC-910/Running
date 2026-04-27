@@ -1441,7 +1441,7 @@ if st.session_state.logged_in:
 
                 # -------- Edit --------
                 with col1:
-                    if st.button(f"Edit"):
+                    if st.button(f"Edit {row['id']}"):
 
                         st.session_state["edit_event"] = row["id"]
 
