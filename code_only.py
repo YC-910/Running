@@ -180,20 +180,19 @@ def save_events(df):
     """, (st.session_state.user_db_id,))
 
     # get safe starting id from DB (IMPORTANT)
-    cursor.execute("SELECT ISNULL(MAX(id), 0) FROM 'Events'")
+    cursor.execute('SELECT COALESCE(MAX(id), 0) FROM "Events"')
     base_id = cursor.fetchone()[0]
 
     for i, row in enumerate(df.itertuples(), start=1):
         cursor.execute("""
-            INSERT INTO "Events" (id, name, date, description, user_id)
-            VALUES (%s, %s, %s, %s, %s)
-        """,
-        base_id + i,
-        row.name,
-        row.date,
-        row.description,
-        st.session_state.user_db_id)
-
+            INSERT INTO "Events" (name, date, description, user_id)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            row.name,
+            row.date,
+            row.description,
+            st.session_state.user_db_id
+        ))
     conn.commit()
     conn.close()
 
