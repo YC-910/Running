@@ -1298,7 +1298,7 @@ if st.session_state.logged_in:
         if df.empty:
             st.info("No activities yet.")
         else:
-            df["date"] = pd.to_datetime(df["date"], errors="coerce", dayfirst=True)
+            df["date"] = pd.to_datetime(df["date"], dayfirst=True)
 
             # ------------------ Dashboard Cards ------------------
             c1, c2, c3, c4 = st.columns(4)
@@ -1501,7 +1501,7 @@ if st.session_state.logged_in:
         if df.empty:
             st.info("No activities logged yet.")
         else:
-            df["date"] = pd.to_datetime(df["date"], errors="coerce", dayfirst=True)
+            df["date"] = pd.to_datetime(df["date"], dayfirst=True)
             from calendar import month_name, monthrange
             
             # Month / Year selector
