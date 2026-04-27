@@ -362,13 +362,14 @@ def create_note(note):
     cursor = conn.cursor()
 
     cursor.execute("""
-        INSERT INTO "Notes" (date, title, content, tags, user_id)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO "Notes" (id, date, title, content, tags, user_id)
+        VALUES (%s, %s, %s, %s, %s, %s)
     """, (
-        note["date"],
-        note["title"],
-        note["content"],
-        note.get("tags"),
+        new_id,
+        row["date"],
+        row["title"],
+        row["content"],
+        row.get("tags"),
         st.session_state.user_db_id
     ))
 
