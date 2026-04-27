@@ -1610,7 +1610,7 @@ if st.session_state.logged_in:
                     cursor = conn.cursor()
 
                     # ✅ get next valid ID from SQL (not dataframe)
-                    cursor.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM 'Notes'")
+                    cursor.execute('SELECT COALESCE(MAX(id), 0) + 1 FROM "Notes"')
                     new_id = cursor.fetchone()[0]
                     cursor.execute("""
                         INSERT INTO Notes (id, date, title, content, tags, user_id)
