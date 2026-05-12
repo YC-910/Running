@@ -89,6 +89,10 @@ def snap_bpm(x):
         # already clean (0 or 5)
         return x
 
+def show_result():
+    """Create a reusable result container."""
+    return st.empty()
+
 # ==================================================
 # New Functions
 # ==================================================
@@ -706,8 +710,10 @@ if st.session_state.logged_in:
                 m = c2.number_input("Minutes", 0, key="p_m")
                 s = c3.number_input("Seconds", 0, 59, key="p_s")
 
+                pace_result = show_result()
+
                 if st.button("Calculate Pace", key="p_btn"):
-                    st.success(
+                    pace_result.success(
                         f"{format_pace(to_minutes(h, m, s) / d)} min/km"
                     )
 
@@ -725,12 +731,14 @@ if st.session_state.logged_in:
                 m = c2.number_input("Minutes", 0, key="d_m")
                 s = c3.number_input("Seconds", 0, 59, key="d_s")
 
+                dist_result = show_result()
+
                 if st.button("Calculate Distance", key="d_btn"):
                     pace = pace_to_minutes(p_min, p_sec)
                     t = to_minutes(h, m, s)
 
                     if pace > 0:
-                        st.success(f"{t / pace:.2f} km")
+                        dist_result.success(f"{t / pace:.2f} km")
                     else:
                         st.error("Pace cannot be 0")
                         
@@ -745,6 +753,8 @@ if st.session_state.logged_in:
                 p_min = p1.number_input("Minutes", 0, key="t_p_min")
                 p_sec = p2.number_input("Seconds", 0, 59, key="t_p_sec")
 
+                time_result = show_result()
+
                 if st.button("Calculate Time", key="t_btn"):
                     pace = pace_to_minutes(p_min, p_sec)
                     t = d * pace
@@ -754,7 +764,7 @@ if st.session_state.logged_in:
                     h = m // 60
                     m = m % 60
 
-                    st.success(f"{h} hours, {m} minutes, {s} seconds")
+                    time_result.success(f"{h} hours, {m} minutes, {s} seconds")
 
         # ==================================================
         # SPEED CONVERTER (placeholder – safe)
@@ -777,16 +787,18 @@ if st.session_state.logged_in:
                 "Seconds", 0, 59, step=1, value=0, key="ps_sec"
             )
 
+            ps_result = show_result()
+
             if st.button("Convert to Speed", key="ps_btn"):
                 pace = pace_min + pace_sec / 60
                 if pace > 0:
                     speed = 60 / pace
-                    st.success(f"🚀 **{speed:.2f} km/h**")
 
-                    st.markdown("#### ⏱ Estimated Finish Times")
-                    table = time_table_from_pace(pace)
-                    df_table = pd.DataFrame(table)
-                    st.dataframe(df_table, use_container_width=True, hide_index=True)
+                    with ps_result.container():
+                        st.success(f"🚀 {speed:.2f} km/h")
+                        table = time_table_from_pace(pace)
+                        df_table = pd.DataFrame(table)
+                        st.dataframe(df_table, use_container_width=True, hide_index=True)
 
                 else:
                     st.warning("Pace must be greater than 0")
@@ -799,14 +811,16 @@ if st.session_state.logged_in:
                 "Speed (km/h)", 0.1, step=0.1, value=10.0, key="sp_speed"
             )
 
+            sp_result = show_result()
+
             if st.button("Convert to Pace", key="sp_btn"):
                 if speed > 0:
                     pace = 60 / speed
-                    st.success(f"🏃 **{format_pace(pace)} min/km**")
 
-                    st.markdown("#### ⏱ Estimated Finish Times")
-                    table = time_table_from_pace(pace)
-                    st.table(table)
+                    with sp_result.container():
+                        st.success(f"🏃 {format_pace(pace)} min/km")
+                        table = time_table_from_pace(pace)
+                        st.table(table)
 
                 else:
                     st.warning("Speed must be greater than 0")
@@ -897,14 +911,12 @@ if st.session_state.logged_in:
                     time_hours = h + m / 60 + s / 3600
                     time_minutes = time_hours * 60
 
+                    calorie_result = show_result()
+
                     if st.button("Calculate Calories (Smart Mode)"):
-
                         if weight > 0 and time_hours > 0 and distance > 0:
+                            pace = time_minutes / distance
 
-                            # ---------------- PACE ----------------
-                            pace = time_minutes / distance  # min/km
-
-                            # ---------------- ESTIMATED INTENSITY (NO BPM) ----------------
                             if pace <= 5:
                                 zone = "Maximum (VO2 Max Zone)"
                                 met = 12.0
@@ -921,14 +933,12 @@ if st.session_state.logged_in:
                                 zone = "Very Light (Warm Up Zone)"
                                 met = 3.5
 
-                            # ---------------- CALORIES ----------------
                             calories = met * weight * time_hours
 
-                            # ---------------- OUTPUT ----------------
-                            st.info(f"📊 Estimated Effort Zone: {zone}")
-                            st.info(f"🏃 Pace: {pace:.2f} min/km")
-
-                            st.success(f"🔥 Estimated Calories Burned: {calories:.0f} kcal")
+                            with calorie_result.container():
+                                st.info(f"📊 Estimated Effort Zone: {zone}")
+                                st.info(f"🏃 Pace: {pace:.2f} min/km")
+                                st.success(f"🔥 Estimated Calories Burned: {calories:.0f} kcal")
 
                         else:
                             st.error("Please enter valid values")
@@ -950,12 +960,15 @@ if st.session_state.logged_in:
                 key="vo_distance"
             )
 
+            vo_result = show_result()
+
             if st.button("Calculate VO2 Max", key="vo_btn"):
                 if distance_km > 0:
-                    distance_m = distance_km * 1000  # convert to meters
+                    distance_m = distance_km * 1000
                     vo2_max = (distance_m - 504.9) / 44.7
 
-                    st.success(f"📈 Estimated VO2 Max: **{vo2_max:.1f} ml/kg/min**")
+                    with vo_result.container():
+                        st.success(f"📈 Estimated VO2 Max: {vo2_max:.1f} ml/kg/min")
 
                     # -------- Interpretation --------
                     if vo2_max >= 60:
@@ -981,6 +994,8 @@ if st.session_state.logged_in:
             weight = st.number_input("Weight (kg)", min_value=0.1, step=0.1, value=70.0, key="b_weight")
             height = st.number_input("Height (cm)", min_value=0.1, step=0.1, value=170.0, key="b_height")
 
+            bmi_result = show_result()
+
             if st.button("Calculate BMI", key="b_btn"):
                 if weight > 0 and height > 0:
                     height_m = height / 100  # convert to meters
@@ -1001,13 +1016,10 @@ if st.session_state.logged_in:
                         color = "red"   # change to "orange" if you prefer
 
                     # -------- Styled Output --------
-                    st.markdown(
+                    bmi_result.markdown(
                         f"""
                         <div style="padding:15px;border-radius:10px;background-color:#f9f9f9;">
-                            <h2 style="color:{color};margin:0;">⚖️ BMI: {bmi:.1f}</h2>
-                            <p style="color:{color};font-size:18px;margin:5px 0;">
-                                <b>Category: {category}</b>
-                            </p>
+                            <h2>⚖️ BMI: {bmi:.1f}</h2>
                         </div>
                         """,
                         unsafe_allow_html=True
@@ -1119,6 +1131,8 @@ if st.session_state.logged_in:
                 )
 
                 # ---------------- CONVERT ----------------
+                premium_result = show_result()
+
                 if st.button("Convert", key="psp_btn"):
 
                     # Convert inputs
@@ -1144,38 +1158,39 @@ if st.session_state.logged_in:
                         high_bpm = snap_bpm(bpm + 5)
 
                         # ---------------- OUTPUT ----------------
-                        st.success(f"""
-                        🚀 **Results**
+                        with premium_result.container():
+                            st.success(f"""
+                            🚀 **Results**
 
-                        - 🏃 Average Pace: {pace_min}:{pace_sec:02d} min/km  
-                        - ⚡ Average Speed: {speed_kmh:.2f} km/h  
-                        - 📏 Estimate Stride Length: {stride_length:.2f} m  
-                        - 👣 Estimate Cadence (SPM): {spm:.0f} steps/min  
-                        - 🎵 Estimate BPM: {bpm:.0f} BPM  
-                        """)
+                            - 🏃 Average Pace: {pace_min}:{pace_sec:02d} min/km  
+                            - ⚡ Average Speed: {speed_kmh:.2f} km/h  
+                            - 📏 Estimate Stride Length: {stride_length:.2f} m  
+                            - 👣 Estimate Cadence (SPM): {spm:.0f} steps/min  
+                            - 🎵 Estimate BPM: {bpm:.0f} BPM  
+                            """)
 
-                        st.info(f"""
-                        🎧 Recommended Music Range:
+                            st.info(f"""
+                            🎧 Recommended Music Range:
 
-                        **{low_bpm:.0f} BPM → {high_bpm:.0f} BPM**
-                        """)
+                            **{low_bpm:.0f} BPM → {high_bpm:.0f} BPM**
+                            """)
 
-                        # ---------------- MUSIC LINKS ----------------
-                        st.markdown("### 🎧 Premium Music Access")
+                            # ---------------- MUSIC LINKS ----------------
+                            st.markdown("### 🎧 Premium Music Access")
 
-                        c1, c2 = st.columns(2)
+                            c1, c2 = st.columns(2)
 
-                        with c1:
-                            st.link_button(
-                                f"🎵 {low_bpm:.0f} BPM MIX",
-                                f"https://open.spotify.com/search/{int(low_bpm)}%20BPM%20Mix"
-                            )
+                            with c1:
+                                st.link_button(
+                                    f"🎵 {low_bpm:.0f} BPM MIX",
+                                    f"https://open.spotify.com/search/{int(low_bpm)}%20BPM%20Mix"
+                                )
 
-                        with c2:
-                            st.link_button(
-                                f"🎵 {high_bpm:.0f} BPM MIX",
-                                f"https://open.spotify.com/search/{int(high_bpm)}%20BPM%20Mix"
-                            )
+                            with c2:
+                                st.link_button(
+                                    f"🎵 {high_bpm:.0f} BPM MIX",
+                                    f"https://open.spotify.com/search/{int(high_bpm)}%20BPM%20Mix"
+                                )
 
                     else:
                         st.warning("Please enter valid pace and height.")
