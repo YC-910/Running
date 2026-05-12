@@ -32,6 +32,9 @@ if "is_admin" not in st.session_state:
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+if "guest" not in st.session_state:
+    st.session_state.guest = False
+
 if "username" not in st.session_state:
     st.session_state.username = ""
 
@@ -231,6 +234,10 @@ def time_table_from_pace(pace_min_per_km):
 
     return rows
 
+def require_login(feature_name):
+    if st.session_state.guest:
+        st.warning(f"🔐 '{feature_name}' requires an account. Please login to access this feature.")
+        st.stop()
 # ==================================================
 # USER AUTH CRUD
 # ==================================================
@@ -625,19 +632,33 @@ if not st.session_state.logged_in:
         user_id_input = st.text_input("User ID")
         password_input = st.text_input("Password", type="password")
 
-        if st.button("Login"):
+        col1, col2 = st.columns(2)
+
+        # LOGIN BUTTON
+        if col1.button("Login"):
 
             user = get_user(user_id_input, password_input)
 
             if user:
                 st.session_state.logged_in = True
-                st.session_state.user_db_id = user[0]   # 👈 THIS IS THE KEY
+                st.session_state.guest = False
+                st.session_state.user_db_id = user[0]
                 st.session_state.username = user[1]
 
                 st.success("Login successful")
                 st.rerun()
             else:
                 st.error("Invalid user ID or password")
+
+        # 👇 CONTINUE AS GUEST BUTTON
+        if col2.button("Continue as Guest"):
+
+            st.session_state.logged_in = True
+            st.session_state.guest = True
+            st.session_state.username = "Guest"
+
+            st.info("You are using Guest Mode")
+            st.rerun()
 
     # ================= SIGN UP =================
     else:
@@ -1026,7 +1047,7 @@ if st.session_state.logged_in:
         # ⏱️ PACE → SPM → BPM CONVERTER
         # ==================================================
         with pace_spm_bpm_converter:
-
+            require_login("Pace/SPM/BPM Converter")
             st.markdown("### ⏱️ Pace → SPM → BPM Converter")
 
             # ==================================================
@@ -1184,6 +1205,9 @@ if st.session_state.logged_in:
     # LOG RUN
     # ==================================================
     with log:
+        require_login("Log Run")
+        st.title("📝 Log Run")
+
         st.markdown("### Log Activity")
         d = st.date_input("Date", value=date.today(), key="l_date")
         km = st.number_input("Distance (km)", 0.1, step=0.1, key="l_km")
@@ -1209,6 +1233,8 @@ if st.session_state.logged_in:
         # 🏃 RACE PREDICTOR
         # ==================================================
         with race_predictor:
+            require_login("Race Predictor")
+            st.title("🏃 Race Predictor")
 
             st.title("🏃 Race Predictor")
             st.caption("Predict your race performance based on a known result")
@@ -1303,6 +1329,8 @@ if st.session_state.logged_in:
     # DASHBOARD
     # ==================================================
     with dash:
+        require_login("Performance Dashboard")
+
         df = read_runs()
         if df.empty:
             st.info("No activities yet.")
@@ -1381,7 +1409,7 @@ if st.session_state.logged_in:
     # EVENT COUNTDOWN
     # =================================================
     with event:
-
+        require_login("Event Countdown")
         st.markdown("### 🏁 Running Event Countdown")
 
         df_events = load_events()
@@ -1504,6 +1532,7 @@ if st.session_state.logged_in:
     # CALENDAR VIEW - Proper Table + Monthly Summary
     # ==================================================
     with calendar:
+        require_login("Event Countdown")
         st.markdown("### 📅 Monthly Training Calendar")
         df = read_runs()
         
@@ -1597,6 +1626,7 @@ if st.session_state.logged_in:
     # NOTES TAB - Add / Edit / Delete / Search Notes
     # ==================================================
     with notes:
+        require_login("Notes")
         st.markdown("### 📝 Training Notes")
         st.markdown("Keep track of thoughts, injuries, goals, or reflections.")
 
