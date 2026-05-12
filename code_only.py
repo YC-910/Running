@@ -660,7 +660,7 @@ if st.session_state.logged_in:
     # ==================================================
     # MAIN TABS
     # ==================================================
-    tools, log, race_predictor, dash, event, calendar, notes = st.tabs([
+    tools, log, race_predictor, dash, event, calendar, notes, logout = st.tabs([
         "⚡ Tools",
         "📝 Log Run",
         "🏃 Race Predictor",
@@ -668,20 +668,20 @@ if st.session_state.logged_in:
         "🏁 Event Countdown",
         "📅 Calendar",
         "📝 Notes",
+        "🔐 Logout"
     ])
 
     # ==================================================
     # TOOLS
     # ==================================================
     with tools:
-        pace_converter, speed_converter, hr_cb_calculator, VO_calculator, BMI_calculator, pace_spm_bpm_converter, logout = st.tabs([
+        pace_converter, speed_converter, hr_cb_calculator, VO_calculator, BMI_calculator, pace_spm_bpm_converter = st.tabs([
             "🧮 Pace Converter",
             "🚀 Speed Converter",
             "❤️‍🔥 Heart & Calorie Calculator",
             "📈 VO2 Max Calculator",
             "⚖️ BMI Calculator",
-            "⏱️ Pace/SPM/BPM Converter",
-            "🔐 Logout"
+            "⏱️ Pace/SPM/BPM Converter"
         ])
 
         # ==================================================
