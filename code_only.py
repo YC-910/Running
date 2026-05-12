@@ -9,6 +9,17 @@ def get_connection():
         "postgresql://postgres.ibulpdvkvyqwbjdkhsms:fitnessstreamlit@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres"
     )
 
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #121212;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # ==================================================
 # PASSWORDS
 # ==================================================
@@ -461,6 +472,16 @@ def delete_event(event_id):
 # ==================================================
 # ULTRA-PREMIUM GARMIN / STRAVA CSS (MOBILE FRIENDLY)
 # ==================================================
+
+hide_github_icon = """
+<style>
+#GithubIcon {
+  visibility: hidden;
+}
+</style>
+"""
+st.markdown(hide_github_icon, unsafe_allow_html=True)
+
 
 st.markdown("""
 <style>
