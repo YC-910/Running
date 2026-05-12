@@ -237,7 +237,8 @@ def time_table_from_pace(pace_min_per_km):
 def require_login(feature_name):
     if st.session_state.guest:
         st.warning(f"🔐 '{feature_name}' requires an account. Please login to access this feature.")
-        st.stop()
+        return False
+    return True
 # ==================================================
 # USER AUTH CRUD
 # ==================================================
@@ -1047,7 +1048,10 @@ if st.session_state.logged_in:
         # ⏱️ PACE → SPM → BPM CONVERTER
         # ==================================================
         with pace_spm_bpm_converter:
-            require_login("Pace/SPM/BPM Converter")
+            if st.session_state.get("guest", False):
+                st.warning("🔐 This feature requires an account.")
+                st.info("Please login to access Pace/SPM/BPM Converter.")
+                st.stop()
             st.markdown("### ⏱️ Pace → SPM → BPM Converter")
 
             # ==================================================
