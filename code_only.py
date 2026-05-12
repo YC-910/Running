@@ -3,6 +3,9 @@ import pandas as pd
 from datetime import date
 import altair as alt
 import psycopg2
+import extra_streamlit_components as stx
+
+cookie_manager = stx.CookieManager()
 
 def get_connection():
     return psycopg2.connect(
@@ -34,6 +37,24 @@ if "logged_in" not in st.session_state:
 
 if "username" not in st.session_state:
     st.session_state.username = ""
+
+if "user_db_id" not in st.session_state:
+    st.session_state.user_db_id = None
+
+
+# restore from cookies
+cookie_login = cookie_manager.get("logged_in")
+cookie_user = cookie_manager.get("username")
+cookie_id = cookie_manager.get("user_db_id")
+
+if cookie_login == "true":
+    st.session_state.logged_in = True
+
+if cookie_user:
+    st.session_state.username = cookie_user
+
+if cookie_id:
+    st.session_state.user_db_id = cookie_id
 
 # ==================================================
 # Helpers
@@ -623,8 +644,13 @@ if not st.session_state.logged_in:
 
             if user:
                 st.session_state.logged_in = True
-                st.session_state.user_db_id = user[0]   # 👈 THIS IS THE KEY
+                st.session_state.user_db_id = user[0]
                 st.session_state.username = user[1]
+
+                # 💾 SAVE TO COOKIE
+                cookie_manager.set("logged_in", "true")
+                cookie_manager.set("username", user[1])
+                cookie_manager.set("user_db_id", str(user[0]))
 
                 st.success("Login successful")
                 st.rerun()
@@ -666,13 +692,14 @@ if st.session_state.logged_in:
     # TOOLS
     # ==================================================
     with tools:
-        pace_converter, speed_converter, hr_cb_calculator, VO_calculator, BMI_calculator, pace_spm_bpm_converter = st.tabs([
+        pace_converter, speed_converter, hr_cb_calculator, VO_calculator, BMI_calculator, pace_spm_bpm_converter, logout = st.tabs([
             "🧮 Pace Converter",
             "🚀 Speed Converter",
             "❤️‍🔥 Heart & Calorie Calculator",
             "📈 VO2 Max Calculator",
             "⚖️ BMI Calculator",
-            "⏱️ Pace/SPM/BPM Converter"
+            "⏱️ Pace/SPM/BPM Converter",
+            "🔐 Logout"
         ])
 
         # ==================================================
@@ -1674,3 +1701,21 @@ if st.session_state.logged_in:
                         save_notes(notes_df)
                         st.warning("Note deleted")
                         st.rerun()
+    # ==================================================
+    # Logout
+    # ==================================================
+    with logout:
+        st.markdown("### 🔐 Logout")
+
+        if st.button("Logout"):
+            st.session_state.logged_in = False
+            st.session_state.user_db_id = None
+            st.session_state.username = None
+
+            # 💾 CLEAR COOKIES
+            cookie_manager.delete("logged_in")
+            cookie_manager.delete("username")
+            cookie_manager.delete("user_db_id")
+
+            st.success("Logged out successfully")
+            st.rerun()
