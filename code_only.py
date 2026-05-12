@@ -1016,10 +1016,14 @@ if st.session_state.logged_in:
                         color = "red"   # change to "orange" if you prefer
 
                     # -------- Styled Output --------
-                    bmi_result.markdown(
-                        f"""
-                        <div style="padding:15px;border-radius:10px;background-color:#f9f9f9;">
-                            <h2>⚖️ BMI: {bmi:.1f}</h2>
+                    with bmi_result.container():
+                        st.markdown(
+                            f"""
+                            <div style="padding:15px;border-radius:10px;background-color:#f9f9f9;">
+                                <h2 style="color:{color};margin:0;">⚖️ BMI: {bmi:.1f}</h2>
+                                <p style="color:{color};font-size:18px;margin:5px 0;">
+                                    <b>Category: {category}</b>
+                            </p>
                         </div>
                         """,
                         unsafe_allow_html=True
