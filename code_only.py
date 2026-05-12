@@ -734,6 +734,7 @@ if st.session_state.logged_in:
             # ---------------- Pace ----------------
             with pace:
                 st.markdown("### Pace Calculator")
+
                 d = st.number_input(
                     "Distance (km)", 0.1, step=0.1, value=5.0, key="p_d"
                 )
@@ -743,11 +744,12 @@ if st.session_state.logged_in:
                 m = c2.number_input("Minutes", 0, key="p_m")
                 s = c3.number_input("Seconds", 0, 59, key="p_s")
 
-                pace_result = show_result()
-
                 if st.button("Calculate Pace", key="p_btn"):
-                    pace_result.success(
-                        f"{format_pace(to_minutes(h, m, s) / d)} min/km"
+                    show_result(
+                        lambda: st.success(
+                            f"{format_pace(to_minutes(h, m, s) / d)} min/km"
+                        ),
+                        "pace_result"
                     )
 
             # ---------------- Distance ----------------
