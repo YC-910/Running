@@ -89,9 +89,42 @@ def snap_bpm(x):
         # already clean (0 or 5)
         return x
 
-def show_result():
-    """Create a reusable result container."""
-    return st.empty()
+def show_result(content_func, anchor_id="result"):
+    """
+    Display result in a fixed container and auto-scroll to it.
+
+    Parameters:
+    - content_func: function containing Streamlit output code
+    - anchor_id: unique id for scrolling target
+    """
+    
+    # Anchor target
+    st.markdown(
+        f'<div id="{anchor_id}" style="padding-top:10px;"></div>',
+        unsafe_allow_html=True
+    )
+
+    # Result container
+    result_box = st.container()
+
+    with result_box:
+        content_func()
+
+    # Auto scroll
+    st.markdown(
+        f"""
+        <script>
+            var element = window.parent.document.getElementById("{anchor_id}");
+            if (element) {{
+                element.scrollIntoView({{
+                    behavior: "smooth",
+                    block: "start"
+                }});
+            }}
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
 
 # ==================================================
 # New Functions
