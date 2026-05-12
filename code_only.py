@@ -32,9 +32,6 @@ if "is_admin" not in st.session_state:
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-if "guest" not in st.session_state:
-    st.session_state.guest = False
-
 if "username" not in st.session_state:
     st.session_state.username = ""
 
@@ -234,11 +231,6 @@ def time_table_from_pace(pace_min_per_km):
 
     return rows
 
-def require_login(feature_name):
-    if st.session_state.guest:
-        st.warning(f"🔐 '{feature_name}' requires an account. Please login to access this feature.")
-        return False
-    return True
 # ==================================================
 # USER AUTH CRUD
 # ==================================================
@@ -633,33 +625,19 @@ if not st.session_state.logged_in:
         user_id_input = st.text_input("User ID")
         password_input = st.text_input("Password", type="password")
 
-        col1, col2 = st.columns(2)
-
-        # LOGIN BUTTON
-        if col1.button("Login"):
+        if st.button("Login"):
 
             user = get_user(user_id_input, password_input)
 
             if user:
                 st.session_state.logged_in = True
-                st.session_state.guest = False
-                st.session_state.user_db_id = user[0]
+                st.session_state.user_db_id = user[0]   # 👈 THIS IS THE KEY
                 st.session_state.username = user[1]
 
                 st.success("Login successful")
                 st.rerun()
             else:
                 st.error("Invalid user ID or password")
-
-        # 👇 CONTINUE AS GUEST BUTTON
-        if col2.button("Continue as Guest"):
-
-            st.session_state.logged_in = True
-            st.session_state.guest = True
-            st.session_state.username = "Guest"
-
-            st.info("You are using Guest Mode")
-            st.rerun()
 
     # ================= SIGN UP =================
     else:
@@ -1048,174 +1026,164 @@ if st.session_state.logged_in:
         # ⏱️ PACE → SPM → BPM CONVERTER
         # ==================================================
         with pace_spm_bpm_converter:
-            if st.session_state.get("guest", False):
 
-                st.warning("🔐 This feature requires an account.")
-                st.info("Please login to access Pace/SPM/BPM Converter.")
+            st.markdown("### ⏱️ Pace → SPM → BPM Converter")
 
-                # 🚫 DO NOT render the rest of the feature
-            else:
+            # ==================================================
+            # 🔐 PREMIUM LOGIN
+            # ==================================================
+            if not st.session_state.get("is_premium", False):
 
-                st.markdown("### ⏱️ Pace → SPM → BPM Converter")
+                st.markdown("""
+                <div style="
+                    padding:15px;
+                    border-radius:10px;
+                    background-color:#1E1E1E;
+                    color:#ffffff;
+                    line-height:1.8;
+                ">
+                Premium Feature:
+                ⏱️ Pace → SPM → BPM Converter<br>
+                🔒 Unlock to access full analytics<br>
+                🎧 Spotify integration included<br>
+                📊 Personalized running insights<br>
+                ⚡ Real-time pace conversion
+                </div>
+                """, unsafe_allow_html=True)
+                
+                password = st.text_input("Enter Password to unlock Premium", type="password")
 
+                if password == "":
+                    st.info("🔒 Premium Feature Locked")
+
+                elif password == PREMIUM_PASSWORD:
+                    st.session_state.is_premium = True
+                    st.success("🎉 Premium Unlocked!")
+                    st.rerun()
+
+                elif password != "":
+                    st.error("❌ Wrong Password")
+                    st.info("🔒 Premium Feature Locked")
+
+            # ==================================================
+            # 🎯 PREMIUM CONTENT (ONLY SHOW IF UNLOCKED)
+            # ==================================================
+            if st.session_state.is_premium:
+                
                 # ==================================================
-                # 🔐 PREMIUM LOGIN
+                # Estimate
                 # ==================================================
-                if not st.session_state.get("is_premium", False):
 
+                # ---------------- EXPANDER ----------------
+                with st.expander("🔎 How this estimate converter works", expanded=True):
                     st.markdown("""
-                    <div style="
-                        padding:15px;
-                        border-radius:10px;
-                        background-color:#1E1E1E;
-                        color:#ffffff;
-                        line-height:1.8;
-                    ">
-                    Premium Feature:
-                    ⏱️ Pace → SPM → BPM Converter<br>
-                    🔒 Unlock to access full analytics<br>
-                    🎧 Spotify integration included<br>
-                    📊 Personalized running insights<br>
-                    ⚡ Real-time pace conversion
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    password = st.text_input("Enter Password to unlock Premium", type="password")
+                    ### 1️⃣ Speed from pace  
+                    Speed (km/h) = 60 / Pace (min/km)
 
-                    if password == "":
-                        st.info("🔒 Premium Feature Locked")
+                    ### 2️⃣ Stride estimation  
+                    Stride length = 0.65 × Height (m)
 
-                    elif password == PREMIUM_PASSWORD:
-                        st.session_state.is_premium = True
-                        st.success("🎉 Premium Unlocked!")
-                        st.rerun()
+                    ### 3️⃣ Cadence (SPM)  
+                    SPM = 1000 / (Pace × Stride length)
 
-                    elif password != "":
-                        st.error("❌ Wrong Password")
-                        st.info("🔒 Premium Feature Locked")
+                    ### 4️⃣ Music sync model  
+                    BPM = SPM (1:1 rhythm matching)
+                    """)
 
-                # ==================================================
-                # 🎯 PREMIUM CONTENT (ONLY SHOW IF UNLOCKED)
-                # ==================================================
-                if st.session_state.is_premium:
-                    
-                    # ==================================================
-                    # Estimate
-                    # ==================================================
+                # ---------------- INPUTS ----------------
+                c1, c2, c3 = st.columns(3)
 
-                    # ---------------- EXPANDER ----------------
-                    with st.expander("🔎 How this estimate converter works", expanded=True):
-                        st.markdown("""
-                        ### 1️⃣ Speed from pace  
-                        Speed (km/h) = 60 / Pace (min/km)
-
-                        ### 2️⃣ Stride estimation  
-                        Stride length = 0.65 × Height (m)
-
-                        ### 3️⃣ Cadence (SPM)  
-                        SPM = 1000 / (Pace × Stride length)
-
-                        ### 4️⃣ Music sync model  
-                        BPM = SPM (1:1 rhythm matching)
-                        """)
-
-                    # ---------------- INPUTS ----------------
-                    c1, c2, c3 = st.columns(3)
-
-                    with c1:
-                        pace_min = st.number_input(
-                            "Pace (Minutes)",
-                            min_value=0,
-                            step=1,
-                            key="psp_pace_min"
-                        )
-
-                    with c2:
-                        pace_sec = st.number_input(
-                            "Pace (Seconds)",
-                            min_value=0,
-                            max_value=59,
-                            step=1,
-                            key="psp_pace_sec"
-                        )
-
-                    with c3:
-                        height_cm = st.number_input(
-                        "Height (cm)",
+                with c1:
+                    pace_min = st.number_input(
+                        "Pace (Minutes)",
                         min_value=0,
                         step=1,
-                        key="psp_height"
+                        key="psp_pace_min"
                     )
 
-                    # ---------------- CONVERT ----------------
-                    if st.button("Convert", key="psp_btn"):
+                with c2:
+                    pace_sec = st.number_input(
+                        "Pace (Seconds)",
+                        min_value=0,
+                        max_value=59,
+                        step=1,
+                        key="psp_pace_sec"
+                    )
 
-                        # Convert inputs
-                        pace = pace_min + (pace_sec / 60)
-                        height_m = height_cm / 100 if height_cm > 0 else 0
+                with c3:
+                    height_cm = st.number_input(
+                    "Height (cm)",
+                    min_value=0,
+                    step=1,
+                    key="psp_height"
+                )
 
-                        if pace > 0 and height_m > 0:
+                # ---------------- CONVERT ----------------
+                if st.button("Convert", key="psp_btn"):
 
-                            # 1️⃣ Speed
-                            speed_kmh = 60 / pace
+                    # Convert inputs
+                    pace = pace_min + (pace_sec / 60)
+                    height_m = height_cm / 100 if height_cm > 0 else 0
 
-                            # 2️⃣ Stride
-                            stride_length = 0.65 * height_m
+                    if pace > 0 and height_m > 0:
 
-                            # 3️⃣ Cadence (SPM)
-                            spm = 1000 / (pace * stride_length)
+                        # 1️⃣ Speed
+                        speed_kmh = 60 / pace
 
-                            # 4️⃣ Music BPM
-                            bpm = spm
+                        # 2️⃣ Stride
+                        stride_length = 0.65 * height_m
 
-                            # BPM range for music
-                            low_bpm = snap_bpm(bpm - 5)
-                            high_bpm = snap_bpm(bpm + 5)
+                        # 3️⃣ Cadence (SPM)
+                        spm = 1000 / (pace * stride_length)
 
-                            # ---------------- OUTPUT ----------------
-                            st.success(f"""
-                            🚀 **Results**
+                        # 4️⃣ Music BPM
+                        bpm = spm
 
-                            - 🏃 Average Pace: {pace_min}:{pace_sec:02d} min/km  
-                            - ⚡ Average Speed: {speed_kmh:.2f} km/h  
-                            - 📏 Estimate Stride Length: {stride_length:.2f} m  
-                            - 👣 Estimate Cadence (SPM): {spm:.0f} steps/min  
-                            - 🎵 Estimate BPM: {bpm:.0f} BPM  
-                            """)
+                        # BPM range for music
+                        low_bpm = snap_bpm(bpm - 5)
+                        high_bpm = snap_bpm(bpm + 5)
 
-                            st.info(f"""
-                            🎧 Recommended Music Range:
+                        # ---------------- OUTPUT ----------------
+                        st.success(f"""
+                        🚀 **Results**
 
-                            **{low_bpm:.0f} BPM → {high_bpm:.0f} BPM**
-                            """)
+                        - 🏃 Average Pace: {pace_min}:{pace_sec:02d} min/km  
+                        - ⚡ Average Speed: {speed_kmh:.2f} km/h  
+                        - 📏 Estimate Stride Length: {stride_length:.2f} m  
+                        - 👣 Estimate Cadence (SPM): {spm:.0f} steps/min  
+                        - 🎵 Estimate BPM: {bpm:.0f} BPM  
+                        """)
 
-                            # ---------------- MUSIC LINKS ----------------
-                            st.markdown("### 🎧 Premium Music Access")
+                        st.info(f"""
+                        🎧 Recommended Music Range:
 
-                            c1, c2 = st.columns(2)
+                        **{low_bpm:.0f} BPM → {high_bpm:.0f} BPM**
+                        """)
 
-                            with c1:
-                                st.link_button(
-                                    f"🎵 {low_bpm:.0f} BPM MIX",
-                                    f"https://open.spotify.com/search/{int(low_bpm)}%20BPM%20Mix"
-                                )
+                        # ---------------- MUSIC LINKS ----------------
+                        st.markdown("### 🎧 Premium Music Access")
 
-                            with c2:
-                                st.link_button(
-                                    f"🎵 {high_bpm:.0f} BPM MIX",
-                                    f"https://open.spotify.com/search/{int(high_bpm)}%20BPM%20Mix"
-                                )
+                        c1, c2 = st.columns(2)
 
-                        else:
-                            st.warning("Please enter valid pace and height.")
+                        with c1:
+                            st.link_button(
+                                f"🎵 {low_bpm:.0f} BPM MIX",
+                                f"https://open.spotify.com/search/{int(low_bpm)}%20BPM%20Mix"
+                            )
+
+                        with c2:
+                            st.link_button(
+                                f"🎵 {high_bpm:.0f} BPM MIX",
+                                f"https://open.spotify.com/search/{int(high_bpm)}%20BPM%20Mix"
+                            )
+
+                    else:
+                        st.warning("Please enter valid pace and height.")
             
     # ==================================================
     # LOG RUN
     # ==================================================
     with log:
-        require_login("Log Run")
-        st.title("📝 Log Run")
-
         st.markdown("### Log Activity")
         d = st.date_input("Date", value=date.today(), key="l_date")
         km = st.number_input("Distance (km)", 0.1, step=0.1, key="l_km")
@@ -1241,8 +1209,6 @@ if st.session_state.logged_in:
         # 🏃 RACE PREDICTOR
         # ==================================================
         with race_predictor:
-            require_login("Race Predictor")
-            st.title("🏃 Race Predictor")
 
             st.title("🏃 Race Predictor")
             st.caption("Predict your race performance based on a known result")
@@ -1337,8 +1303,6 @@ if st.session_state.logged_in:
     # DASHBOARD
     # ==================================================
     with dash:
-        require_login("Performance Dashboard")
-
         df = read_runs()
         if df.empty:
             st.info("No activities yet.")
@@ -1417,7 +1381,7 @@ if st.session_state.logged_in:
     # EVENT COUNTDOWN
     # =================================================
     with event:
-        require_login("Event Countdown")
+
         st.markdown("### 🏁 Running Event Countdown")
 
         df_events = load_events()
@@ -1540,7 +1504,6 @@ if st.session_state.logged_in:
     # CALENDAR VIEW - Proper Table + Monthly Summary
     # ==================================================
     with calendar:
-        require_login("Event Countdown")
         st.markdown("### 📅 Monthly Training Calendar")
         df = read_runs()
         
@@ -1634,7 +1597,6 @@ if st.session_state.logged_in:
     # NOTES TAB - Add / Edit / Delete / Search Notes
     # ==================================================
     with notes:
-        require_login("Notes")
         st.markdown("### 📝 Training Notes")
         st.markdown("Keep track of thoughts, injuries, goals, or reflections.")
 
