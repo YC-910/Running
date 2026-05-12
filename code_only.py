@@ -482,6 +482,14 @@ def delete_event(event_id):
 # ==================================================
 # ULTRA-PREMIUM GARMIN / STRAVA CSS (MOBILE FRIENDLY)
 # ==================================================
+hide_github_icon = """
+    <style>
+    .stAppToolbar {visibility: hidden;}
+    #GithubIcon {visibility: hidden;}
+    </style>
+    """
+st.markdown(hide_github_icon, unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 /* ---------- Global ---------- */
