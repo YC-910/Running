@@ -458,15 +458,6 @@ def delete_event(event_id):
     conn.commit()
     conn.close()
 
-hide_github_icon = """
-<style>
-#GithubIcon {
-  visibility: hidden;
-}
-</style>
-"""
-st.markdown(hide_github_icon, unsafe_allow_html=True)
-
 # ==================================================
 # ULTRA-PREMIUM GARMIN / STRAVA CSS (MOBILE FRIENDLY)
 # ==================================================
