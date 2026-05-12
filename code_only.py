@@ -462,6 +462,16 @@ def delete_event(event_id):
 # ULTRA-PREMIUM GARMIN / STRAVA CSS (MOBILE FRIENDLY)
 # ==================================================
 
+hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            .stAppDeployButton {display:none;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 hide_github_icon = """
     <style>
     .stAppToolbar {visibility: hidden;}
