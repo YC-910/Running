@@ -9,17 +9,6 @@ def get_connection():
         "postgresql://postgres.ibulpdvkvyqwbjdkhsms:fitnessstreamlit@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres"
     )
 
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background-color: #121212;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 # ==================================================
 # PASSWORDS
 # ==================================================
